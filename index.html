@@ -3,254 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life RPG V2.0</title>
+    <title>Life RPG V2.1 Custom</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/96/console.png">
     
     <style>
-        /* Estilos Base */
-        html { height: 100%; overflow: hidden; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: #0f0f0f; color: #e0e0e0; height: 100%; display: flex; flex-direction: column;
-            -webkit-user-select: none;
-        }
-        
-        /* Contenedor con Scroll */
+        /* Base */
+        html, body { height: 100%; overflow: hidden; background-color: #0f0f0f; color: #e0e0e0; font-family: -apple-system, system-ui, sans-serif; -webkit-user-select: none; }
         #main-container { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 90px; }
         
-        /* Animaciones */
-        .tab-content { display: none; animation: fadeIn 0.3s ease-out; }
-        .active-tab { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* UI Elements */
-        input, select, textarea { 
-            background: #1e1e1e; border: 1px solid #333; color: white; border-radius: 12px; 
-            padding: 12px; width: 100%; font-size: 16px; margin-bottom: 8px; appearance: none;
-        }
-        input:focus, select:focus { outline: none; border-color: #3b82f6; background: #252525; }
+        /* Utilidades */
+        .tab-content { display: none; }
+        .active-tab { display: block; animation: fadeUp 0.2s ease-out; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        .card { background: #1a1a1a; border-radius: 16px; padding: 16px; margin-bottom: 12px; border: 1px solid #262626; position: relative; }
-        .btn-main { background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; font-weight: bold; padding: 14px; border-radius: 12px; width: 100%; text-align: center; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3); }
-        .btn-main:active { transform: scale(0.98); opacity: 0.9; }
+        .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+        input, select { background: #252525; border: 1px solid #333; color: white; border-radius: 10px; padding: 12px; width: 100%; font-size: 16px; margin-bottom: 8px; }
+        input:focus, select:focus { outline: none; border-color: #3b82f6; }
+        
+        /* Botones */
+        .btn-blue { background: #2563eb; color: white; font-weight: bold; padding: 12px; border-radius: 10px; width: 100%; text-align: center; }
+        .btn-red { background: #dc2626; color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; }
+        .btn-icon { font-size: 18px; padding: 8px; }
 
-        /* Sub-Navegación (Físico) */
-        .sub-nav { display: flex; gap: 8px; margin-bottom: 16px; background: #1a1a1a; padding: 4px; border-radius: 12px; }
-        .sub-nav-btn { flex: 1; text-align: center; padding: 8px; font-size: 14px; border-radius: 8px; color: #666; font-weight: 600; }
-        .sub-nav-btn.active { background: #333; color: white; shadow: 0 2px 4px rgba(0,0,0,0.2); }
-
-        /* Navegación Inferior */
-        .nav-bar { 
-            background: rgba(15, 15, 15, 0.95); border-top: 1px solid #333; 
-            padding: 10px 0 30px 0; display: flex; justify-content: space-around; 
-            backdrop-filter: blur(10px); position: absolute; bottom: 0; width: 100%; z-index: 50;
-        }
-        .nav-item { color: #555; text-align: center; font-size: 10px; flex: 1; transition: color 0.2s; }
+        /* Navegación */
+        .nav-bar { position: absolute; bottom: 0; width: 100%; background: rgba(15,15,15,0.95); border-top: 1px solid #333; display: flex; padding: 10px 0 25px 0; backdrop-filter: blur(10px); z-index: 50; }
+        .nav-item { flex: 1; text-align: center; color: #666; font-size: 10px; }
         .nav-item.active { color: #3b82f6; }
         .nav-item svg { width: 24px; height: 24px; margin: 0 auto 4px; display: block; }
+
+        /* Gráficas */
+        canvas { max-height: 250px; width: 100%; }
         
-        /* Gráfica */
-        canvas { max-height: 200px; width: 100%; }
+        /* Sub-Tabs personalizadas */
+        .pill-menu { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; }
+        .pill { white-space: nowrap; padding: 6px 12px; background: #262626; border-radius: 20px; font-size: 13px; color: #aaa; border: 1px solid #333; }
+        .pill.active { background: #2563eb; color: white; border-color: #2563eb; }
     </style>
 </head>
 <body>
 
-    <div class="px-5 pt-14 pb-4 bg-black/80 sticky top-0 z-40 backdrop-blur-md border-b border-gray-800 flex justify-between items-center">
+    <div class="px-5 pt-12 pb-3 bg-black/90 sticky top-0 z-40 border-b border-gray-800 flex justify-between items-center">
         <div>
-            <div class="text-[10px] text-blue-400 font-bold tracking-wider" id="dateDisplay">CARGANDO...</div>
-            <h1 class="text-2xl font-black text-white">Josema<span class="text-blue-600">RPG</span> <span class="text-xs bg-gray-800 px-2 py-0.5 rounded text-gray-400 font-normal">V2.0</span></h1>
+            <h1 class="text-xl font-black text-white">Josema<span class="text-blue-500">RPG</span></h1>
+            <p class="text-[10px] text-gray-400 uppercase tracking-widest" id="dateDisplay">DATE</p>
         </div>
         <div class="text-right">
-            <div class="text-yellow-400 font-bold text-xl">LVL <span id="lvl-display">1</span></div>
-            <div class="w-24 bg-gray-800 h-1.5 rounded-full mt-1 overflow-hidden">
-                <div id="xp-bar" class="bg-yellow-400 h-full w-0 transition-all duration-500"></div>
-            </div>
+            <div class="text-yellow-400 font-bold text-lg">LVL <span id="lvl">1</span></div>
+            <div class="w-20 bg-gray-800 h-1 rounded-full mt-1 overflow-hidden"><div id="xp-bar" class="bg-yellow-400 h-full w-0"></div></div>
         </div>
     </div>
 
     <div id="main-container" class="px-4 py-4">
 
-        <div id="tab-profile" class="tab-content active-tab">
+        <div id="tab-home" class="tab-content active-tab">
             <div class="grid grid-cols-2 gap-3 mb-4">
-                <div class="card bg-gradient-to-br from-gray-900 to-gray-800 border-none">
-                    <div class="text-2xl mb-1">🦁</div>
-                    <div class="text-xs text-gray-400 uppercase font-bold">Físico</div>
-                    <div id="stat-fisico" class="text-xl font-bold text-white">0</div>
+                <div class="card flex flex-col items-center justify-center py-4">
+                    <span class="text-2xl">🦁</span>
+                    <span class="text-xs text-gray-500 mt-1 uppercase">Físico</span>
+                    <span id="stat-fisico" class="text-xl font-bold">0</span>
                 </div>
-                <div class="card bg-gradient-to-br from-gray-900 to-gray-800 border-none">
-                    <div class="text-2xl mb-1">🧠</div>
-                    <div class="text-xs text-gray-400 uppercase font-bold">Mente</div>
-                    <div id="stat-int" class="text-xl font-bold text-white">0</div>
+                <div class="card flex flex-col items-center justify-center py-4">
+                    <span class="text-2xl">🧠</span>
+                    <span class="text-xs text-gray-500 mt-1 uppercase">Mente</span>
+                    <span id="stat-mente" class="text-xl font-bold">0</span>
                 </div>
             </div>
 
-            <div class="flex justify-between items-center mb-2 mt-6">
-                <h2 class="text-lg font-bold text-white">Racha de Hábitos 🔥</h2>
-                <button onclick="newHabitPrompt()" class="text-blue-400 text-xs font-bold bg-blue-900/30 px-2 py-1 rounded">+ Nuevo</button>
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="font-bold text-gray-300">Hábitos de Hoy</h3>
+                <button onclick="toggleEditHabits()" class="text-xs text-blue-400">Editar Lista</button>
             </div>
-            <div id="habits-list" class="space-y-2"></div>
             
-            <div class="mt-8 text-center">
-                 <button onclick="exportData()" class="text-xs text-gray-500 underline">Guardar Backup (JSON)</button>
+            <div id="habits-editor" class="hidden card bg-blue-900/10 border-blue-900 mb-4">
+                <h4 class="text-xs font-bold text-blue-400 mb-2">AÑADIR HÁBITO</h4>
+                <div class="flex gap-2">
+                    <input type="text" id="new-habit-input" placeholder="Ej: Leer 10 min">
+                    <button onclick="addHabitDef()" class="btn-blue w-auto px-4">+</button>
+                </div>
+                <div id="habits-manage-list" class="mt-2 space-y-1"></div>
             </div>
+
+            <div id="habits-list" class="space-y-2"></div>
         </div>
 
-        <div id="tab-fisico" class="tab-content">
-            <h2 class="text-xl font-bold mb-4">Centro de Entrenamiento</h2>
-            
-            <div class="sub-nav">
-                <div class="sub-nav-btn active" onclick="switchSubTab('sub-gym', this)">🏋️ Gym</div>
-                <div class="sub-nav-btn" onclick="switchSubTab('sub-cardio', this)">🏃 Correr</div>
-                <div class="sub-nav-btn" onclick="switchSubTab('sub-movilidad', this)">🧘 Movilidad</div>
+        <div id="tab-gym" class="tab-content">
+            <div class="flex bg-gray-900 p-1 rounded-xl mb-4 border border-gray-800">
+                <button onclick="setGymMode('log')" id="btn-mode-log" class="flex-1 py-2 text-xs font-bold rounded-lg bg-gray-800 text-white shadow">REGISTRAR</button>
+                <button onclick="setGymMode('routines')" id="btn-mode-routines" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500">MIS RUTINAS</button>
+                <button onclick="setGymMode('stats')" id="btn-mode-stats" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500">GRÁFICAS</button>
             </div>
 
-            <div id="sub-gym" class="sub-tab-content block">
-                <div class="card border-blue-900/50 bg-blue-900/10">
-                    <div class="flex justify-between mb-2">
-                        <label class="text-xs font-bold text-blue-400 uppercase">1. Rutina</label>
-                        <button onclick="configRoutines()" class="text-xs text-gray-400">⚙️ Configurar</button>
-                    </div>
-                    <select id="gym-routine-select" onchange="updateExerciseDropdown()" class="mb-3 font-bold bg-gray-900">
-                        <option value="">Selecciona rutina...</option>
-                    </select>
-
-                    <label class="text-xs font-bold text-blue-400 uppercase">2. Ejercicio</label>
-                    <select id="gym-exercise-select" onchange="loadChartData()" class="mb-3 bg-gray-900">
+            <div id="gym-view-log">
+                <div class="card border-blue-900/30">
+                    <label class="text-[10px] text-gray-500 uppercase font-bold">1. Selecciona Rutina</label>
+                    <select id="sel-routine" onchange="loadExercisesForLog()" class="mb-3 font-bold bg-gray-800 border-gray-700"></select>
+                    
+                    <label class="text-[10px] text-gray-500 uppercase font-bold">2. Selecciona Ejercicio</label>
+                    <select id="sel-exercise" class="mb-3 bg-gray-800 border-gray-700">
                         <option value="">-- Primero elige rutina --</option>
                     </select>
 
                     <div class="grid grid-cols-3 gap-2">
-                        <div>
-                            <label class="text-[10px] text-gray-500">KG</label>
-                            <input type="number" id="gym-kg" placeholder="0" class="text-center font-bold text-lg">
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-gray-500">REPS</label>
-                            <input type="number" id="gym-reps" placeholder="0" class="text-center font-bold text-lg">
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-gray-500">RPE (1-10)</label>
-                            <input type="number" id="gym-rpe" placeholder="-" class="text-center text-gray-400">
-                        </div>
+                        <input type="number" id="inp-kg" placeholder="KG" class="text-center font-bold text-white">
+                        <input type="number" id="inp-reps" placeholder="REPS" class="text-center font-bold text-white">
+                        <input type="number" id="inp-rpe" placeholder="RPE" class="text-center text-gray-400">
                     </div>
-                    <button onclick="logGymSet()" class="btn-main mt-2 shadow-lg shadow-blue-900/40">REGISTRAR SERIE (+XP)</button>
+                    <button onclick="saveSet()" class="btn-blue mt-2">GUARDAR SERIE</button>
                 </div>
 
-                <div class="card p-2" id="chart-container" style="display:none;">
-                    <h3 class="text-xs text-center text-gray-500 mb-2">PROGRESO (KG)</h3>
-                    <canvas id="gymChart"></canvas>
-                </div>
-
-                <h3 class="text-xs font-bold text-gray-500 mt-6 mb-2">HOY</h3>
-                <div id="gym-log-today" class="space-y-2"></div>
+                <h3 class="text-xs font-bold text-gray-500 mt-6 mb-2 flex justify-between">
+                    <span>HISTORIAL DE HOY</span>
+                    <button onclick="clearTodayGym()" class="text-red-500 text-[10px]">Borrar todo hoy</button>
+                </h3>
+                <div id="gym-today-list" class="space-y-2 pb-10"></div>
             </div>
 
-            <div id="sub-cardio" class="sub-tab-content hidden">
+            <div id="gym-view-routines" class="hidden">
+                <div class="card bg-gray-800 border-dashed border-gray-600">
+                    <h4 class="text-sm font-bold text-white mb-2">+ Crear Nueva Rutina</h4>
+                    <div class="flex gap-2">
+                        <input type="text" id="new-routine-name" placeholder="Nombre (ej: Pierna)">
+                        <button onclick="createRoutine()" class="btn-blue w-auto px-4">Crear</button>
+                    </div>
+                </div>
+
+                <div id="routines-list-container" class="space-y-4">
+                    </div>
+            </div>
+
+            <div id="gym-view-stats" class="hidden">
                 <div class="card">
-                    <label class="text-xs font-bold text-green-400 uppercase">Tipo de Cardio</label>
-                    <select id="cardio-type" class="bg-gray-900 mb-3">
-                        <option>Carrera Suave</option>
-                        <option>Series / Intervalos</option>
-                        <option>Cinta / Elíptica</option>
-                        <option>Caminar</option>
-                    </select>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="number" id="cardio-km" placeholder="Distancia (km)">
-                        <input type="number" id="cardio-time" placeholder="Tiempo (min)">
-                    </div>
-                    <button onclick="logCardio()" class="btn-main bg-green-600 mt-2">GUARDAR SESIÓN</button>
+                    <label class="text-xs text-gray-500 uppercase">¿Qué ejercicio quieres ver?</label>
+                    <select id="sel-graph-exercise" onchange="renderGraph()" class="mt-1 bg-gray-900"></select>
                 </div>
-                <div id="cardio-log-list" class="space-y-2 mt-4"></div>
-            </div>
-
-            <div id="sub-movilidad" class="sub-tab-content hidden">
-                <div class="card text-center py-8">
-                    <div class="text-4xl mb-2">🧘</div>
-                    <p class="text-gray-400 mb-4">Cronómetro de Movilidad</p>
-                    <input type="number" id="mob-min" placeholder="Minutos" class="text-center w-24 mx-auto block">
-                    <button onclick="logMobility()" class="btn-main mt-4 bg-purple-600 w-1/2 mx-auto block">Finalizar</button>
+                <div class="card p-2">
+                    <canvas id="mainChart"></canvas>
                 </div>
+                <p id="graph-msg" class="text-center text-xs text-gray-500 mt-2">Selecciona un ejercicio para ver tu progreso.</p>
             </div>
         </div>
 
-        <div id="tab-food" class="tab-content">
-            <h2 class="text-xl font-bold mb-4">Cocina</h2>
-            <div class="card bg-gray-800">
-                <div class="flex justify-between text-center">
-                    <div><span class="block text-blue-400 font-bold text-xl" id="total-prot">0</span><span class="text-xs">PROT</span></div>
-                    <div><span class="block text-yellow-400 font-bold text-xl" id="total-carb">0</span><span class="text-xs">CARB</span></div>
-                    <div><span class="block text-red-400 font-bold text-xl" id="total-fat">0</span><span class="text-xs">GRASA</span></div>
-                    <div><span class="block text-white font-bold text-xl" id="total-cal">0</span><span class="text-xs">KCAL</span></div>
-                </div>
-            </div>
+        <div id="tab-data" class="tab-content">
+            <h2 class="text-xl font-bold mb-4">Datos & Ajustes</h2>
             <div class="card">
-                <input type="text" id="food-name" placeholder="Alimento...">
-                <div class="grid grid-cols-3 gap-2">
-                    <input type="number" id="food-p" placeholder="P" class="text-center">
-                    <input type="number" id="food-c" placeholder="C" class="text-center">
-                    <input type="number" id="food-f" placeholder="F" class="text-center">
+                <button onclick="exportData()" class="btn-blue mb-2 bg-gray-700">💾 Exportar Copia de Seguridad</button>
+                <div class="text-xs text-gray-500 text-center mt-2">
+                    Guarda el archivo .json en tus archivos. <br>
+                    Para restaurar, envíame el archivo y te daré un código importador.
                 </div>
-                <button onclick="addFood()" class="btn-main mt-2 bg-green-700">COMER</button>
+                <button onclick="hardReset()" class="mt-8 w-full py-3 text-red-500 text-xs font-bold border border-red-900 rounded-lg hover:bg-red-900/20">☠️ BORRAR TODO (RESET DE FÁBRICA)</button>
             </div>
-            <div id="food-log-list" class="space-y-2 mt-4"></div>
         </div>
 
     </div>
 
     <nav class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('tab-profile', this)">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-            YO
+        <div class="nav-item active" onclick="switchTab('tab-home', this)">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+            DASHBOARD
         </div>
-        <div class="nav-item" onclick="switchTab('tab-fisico', this)">
+        <div class="nav-item" onclick="switchTab('tab-gym', this)">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            FÍSICO
+            GYM
         </div>
-        <div class="nav-item" onclick="switchTab('tab-food', this)">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-            COCINA
+        <div class="nav-item" onclick="switchTab('tab-data', this)">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            AJUSTES
         </div>
     </nav>
 
     <script>
-        // --- 1. BASE DE DATOS E INICIALIZACIÓN ---
+        /* --- 1. CORE & DATA --- */
         const todayStr = new Date().toLocaleDateString('es-ES');
-        document.getElementById('dateDisplay').textContent = todayStr.toUpperCase();
+        document.getElementById('dateDisplay').textContent = todayStr;
 
-        // Estructura de Datos V2
         let db = {
-            stats: { lvl: 1, xp: 0, fisico: 0, int: 0 },
-            routines: {
-                "Pecho y Espalda": ["Press Banca", "Remo Barra", "Dominadas", "Aperturas"],
-                "Pierna": ["Sentadilla", "Prensa", "Peso Muerto Rumano", "Extensiones"],
-                "Hombro y Brazo": ["Press Militar", "Elevaciones Laterales", "Curl Biceps", "Triceps Polea"]
-            },
-            gymLogs: [], // { date, routine, exercise, kg, reps, rpe }
-            cardioLogs: [],
-            food: [],
-            habitsDef: ["Leer 10 min", "Creatina", "No Alcohol"],
-            habitsLog: {}
+            stats: { lvl: 1, xp: 0, fisico: 0, mente: 0 },
+            habitsDef: ["Beber Agua", "Leer"],
+            habitsLog: {}, // { "date": ["Habito1"] }
+            routines: [], // [ {name: "Pecho", exercises: ["Press", "Aperturas"]} ]
+            gymLogs: [] // { date, routine, ex, kg, reps, rpe }
         };
 
-        // Cargar datos antiguos y migrar si es necesario
-        const saved = localStorage.getItem('josema_rpg_v2');
-        if(saved) {
-            const parsed = JSON.parse(saved);
-            // Fusionamos por si faltan campos nuevos
-            db = { ...db, ...parsed };
-            // Asegurar que routines existe
-            if(!db.routines) db.routines = { "Full Body": ["Sentadilla", "Flexiones", "Dominadas"] };
+        // Cargar y Migrar
+        const saved = localStorage.getItem('josema_rpg_v2_1');
+        if (saved) {
+            db = JSON.parse(saved);
+        } else {
+            // Inicializar con ejemplo vacío o básico
+            if(db.routines.length === 0) {
+                db.routines.push({ name: "Ejemplo: Full Body", exercises: ["Sentadilla", "Flexiones"] });
+            }
         }
 
-        // Gráfico Global
-        let myChart = null;
-
-        // --- 2. FUNCIONES DE INTERFAZ ---
+        // --- 2. NAVIGATION ---
         function switchTab(id, el) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active-tab'));
             document.getElementById(id).classList.add('active-tab');
@@ -258,246 +207,355 @@
             el.classList.add('active');
         }
 
-        function switchSubTab(id, el) {
-            document.querySelectorAll('.sub-tab-content').forEach(t => t.classList.add('hidden'));
-            document.querySelectorAll('.sub-tab-content').forEach(t => t.classList.remove('block'));
-            document.getElementById(id).classList.remove('hidden');
-            document.getElementById(id).classList.add('block');
-            document.querySelectorAll('.sub-nav-btn').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        // --- 3. LÓGICA GYM AVANZADA ---
-        
-        // Cargar Selector de Rutinas
-        function loadRoutinesUI() {
-            const sel = document.getElementById('gym-routine-select');
-            sel.innerHTML = '<option value="">Selecciona rutina...</option>';
-            Object.keys(db.routines).forEach(rName => {
-                sel.innerHTML += `<option value="${rName}">${rName}</option>`;
-            });
-        }
-
-        // Al cambiar rutina, cargar ejercicios
-        function updateExerciseDropdown() {
-            const routineName = document.getElementById('gym-routine-select').value;
-            const exSel = document.getElementById('gym-exercise-select');
-            exSel.innerHTML = '<option value="">-- Elige ejercicio --</option>';
+        function setGymMode(mode) {
+            // Ocultar todas las vistas de gym
+            document.getElementById('gym-view-log').classList.add('hidden');
+            document.getElementById('gym-view-routines').classList.add('hidden');
+            document.getElementById('gym-view-stats').classList.add('hidden');
             
-            if(db.routines[routineName]) {
-                db.routines[routineName].forEach(ex => {
-                    exSel.innerHTML += `<option value="${ex}">${ex}</option>`;
-                });
+            // Reset botones
+            document.getElementById('btn-mode-log').className = "flex-1 py-2 text-xs font-bold rounded-lg text-gray-500";
+            document.getElementById('btn-mode-routines').className = "flex-1 py-2 text-xs font-bold rounded-lg text-gray-500";
+            document.getElementById('btn-mode-stats').className = "flex-1 py-2 text-xs font-bold rounded-lg text-gray-500";
+
+            // Activar seleccionada
+            if(mode === 'log') {
+                document.getElementById('gym-view-log').classList.remove('hidden');
+                document.getElementById('btn-mode-log').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-gray-800 text-white shadow";
+                loadLogSelectors();
+                renderTodayGym();
+            } else if(mode === 'routines') {
+                document.getElementById('gym-view-routines').classList.remove('hidden');
+                document.getElementById('btn-mode-routines').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-gray-800 text-white shadow";
+                renderRoutinesManager();
+            } else if(mode === 'stats') {
+                document.getElementById('gym-view-stats').classList.remove('hidden');
+                document.getElementById('btn-mode-stats').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-gray-800 text-white shadow";
+                loadGraphSelectors();
             }
         }
 
-        // Registrar Serie
-        function logGymSet() {
-            const routine = document.getElementById('gym-routine-select').value;
-            const ex = document.getElementById('gym-exercise-select').value;
-            const kg = document.getElementById('gym-kg').value;
-            const reps = document.getElementById('gym-reps').value;
-            const rpe = document.getElementById('gym-rpe').value;
-
-            if(!routine || !ex || !kg || !reps) {
-                alert("Faltan datos (Rutina, Ejercicio, Peso o Reps)");
-                return;
-            }
-
-            // Guardar
-            db.gymLogs.push({ date: todayStr, routine, ex, kg, reps, rpe, timestamp: Date.now() });
-            
-            // Gamificación
-            addXP(10);
-            db.stats.fisico += 1;
-            
-            saveData();
-            loadChartData(); // Actualizar gráfica
-            renderGymLogsToday();
-        }
-
-        // --- 4. SISTEMA DE GRÁFICAS (CHART.JS) ---
-        function loadChartData() {
-            const exName = document.getElementById('gym-exercise-select').value;
-            if(!exName) {
-                document.getElementById('chart-container').style.display = 'none';
-                return;
-            }
-
-            // Filtrar logs de este ejercicio
-            const logs = db.gymLogs.filter(l => l.ex === exName);
-            if(logs.length === 0) return;
-
-            document.getElementById('chart-container').style.display = 'block';
-
-            // Preparar datos para gráfica (Últimas 10 sesiones)
-            // Agrupamos por fecha (tomamos el peso máximo de cada día)
-            const sessionsMap = {};
-            logs.forEach(l => {
-                if(!sessionsMap[l.date] || Number(l.kg) > Number(sessionsMap[l.date])) {
-                    sessionsMap[l.date] = l.kg;
-                }
-            });
-
-            const labels = Object.keys(sessionsMap).slice(-10); // Últimas 10 fechas
-            const dataPoints = Object.values(sessionsMap).slice(-10);
-
-            // Destruir gráfica anterior si existe
-            if(myChart) myChart.destroy();
-
-            // Crear nueva gráfica
-            const ctx = document.getElementById('gymChart').getContext('2d');
-            myChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Peso Máximo (Kg)',
-                        data: dataPoints,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderWidth: 2,
-                        tension: 0.3,
-                        fill: true,
-                        pointRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: false, grid: { color: '#333' } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-        }
-
-        // --- 5. RENDERIZADO GENERAL ---
-        function renderAll() {
-            // Stats Header
-            document.getElementById('lvl-display').innerText = db.stats.lvl;
-            document.getElementById('stat-fisico').innerText = db.stats.fisico;
-            document.getElementById('stat-int').innerText = db.stats.int;
+        // --- 3. RENDER DASHBOARD ---
+        function renderHome() {
+            document.getElementById('lvl').innerText = db.stats.lvl;
             document.getElementById('xp-bar').style.width = ((db.stats.xp / (100 * db.stats.lvl)) * 100) + '%';
+            document.getElementById('stat-fisico').innerText = db.stats.fisico;
+            document.getElementById('stat-mente').innerText = db.stats.mente;
 
-            // Hábitos
-            const hList = document.getElementById('habits-list');
-            hList.innerHTML = '';
-            if(!db.habitsLog[todayStr]) db.habitsLog[todayStr] = [];
+            // Habits List
+            const list = document.getElementById('habits-list');
+            list.innerHTML = '';
+            const doneToday = db.habitsLog[todayStr] || [];
             
             db.habitsDef.forEach(h => {
-                const isDone = db.habitsLog[todayStr].includes(h);
-                hList.innerHTML += `
-                    <div onclick="toggleHabit('${h}')" class="card p-3 flex justify-between items-center ${isDone ? 'border-green-500/50 bg-green-900/10' : ''}">
-                        <span>${h}</span>
-                        <div class="w-6 h-6 rounded border ${isDone ? 'bg-green-500 border-green-500' : 'border-gray-500'} flex items-center justify-center">
+                const isDone = doneToday.includes(h);
+                list.innerHTML += `
+                    <div onclick="toggleHabit('${h}')" class="card p-3 flex justify-between items-center transition active:scale-95 ${isDone ? 'border-green-600 bg-green-900/10' : ''}">
+                        <span class="${isDone ? 'text-green-400 font-bold' : 'text-gray-300'}">${h}</span>
+                        <div class="w-6 h-6 border rounded flex items-center justify-center ${isDone ? 'bg-green-600 border-green-600' : 'border-gray-500'}">
                             ${isDone ? '✓' : ''}
                         </div>
                     </div>`;
             });
 
-            renderGymLogsToday();
-            renderFood();
+            // Habits Manager List
+            const manageList = document.getElementById('habits-manage-list');
+            manageList.innerHTML = db.habitsDef.map((h, i) => `
+                <div class="flex justify-between items-center bg-gray-900 p-2 rounded">
+                    <span class="text-xs">${h}</span>
+                    <button onclick="deleteHabitDef(${i})" class="text-red-500 font-bold px-2">x</button>
+                </div>
+            `).join('');
         }
 
-        function renderGymLogsToday() {
-            const list = document.getElementById('gym-log-today');
-            list.innerHTML = '';
-            // Logs de hoy, ordenados por recientes
-            const todayLogs = db.gymLogs.filter(l => l.date === todayStr).reverse();
+        // --- 4. GYM LOGIC (LOGGING) ---
+        function loadLogSelectors() {
+            const rSel = document.getElementById('sel-routine');
+            rSel.innerHTML = '<option value="">Selecciona Rutina...</option>';
+            db.routines.forEach((r, i) => {
+                rSel.innerHTML += `<option value="${i}">${r.name}</option>`;
+            });
+        }
+
+        function loadExercisesForLog() {
+            const rIdx = document.getElementById('sel-routine').value;
+            const eSel = document.getElementById('sel-exercise');
+            eSel.innerHTML = '';
             
-            todayLogs.forEach((l, idx) => {
+            if(rIdx !== "") {
+                const exercises = db.routines[rIdx].exercises;
+                if(exercises.length === 0) {
+                    eSel.innerHTML = '<option value="">(Rutina vacía, edítala primero)</option>';
+                } else {
+                    exercises.forEach(ex => {
+                        eSel.innerHTML += `<option value="${ex}">${ex}</option>`;
+                    });
+                }
+            } else {
+                eSel.innerHTML = '<option value="">-- Elige rutina --</option>';
+            }
+        }
+
+        function saveSet() {
+            const rIdx = document.getElementById('sel-routine').value;
+            const ex = document.getElementById('sel-exercise').value;
+            const kg = document.getElementById('inp-kg').value;
+            const reps = document.getElementById('inp-reps').value;
+            const rpe = document.getElementById('inp-rpe').value;
+
+            if(rIdx === "" || !ex || !kg || !reps) { alert("Faltan datos"); return; }
+            
+            const routineName = db.routines[rIdx].name;
+
+            db.gymLogs.push({
+                date: todayStr,
+                timestamp: Date.now(),
+                routine: routineName,
+                ex: ex,
+                kg: kg,
+                reps: reps,
+                rpe: rpe
+            });
+
+            // Level Up logic
+            db.stats.xp += 10;
+            db.stats.fisico += 1;
+            checkLevelUp();
+            saveData();
+
+            // Clear inputs
+            document.getElementById('inp-kg').value = '';
+            document.getElementById('inp-reps').value = '';
+            renderTodayGym();
+        }
+
+        function renderTodayGym() {
+            const list = document.getElementById('gym-today-list');
+            // Filter logs from today
+            const todayLogs = db.gymLogs.filter(l => l.date === todayStr).sort((a,b) => b.timestamp - a.timestamp);
+            
+            list.innerHTML = '';
+            if(todayLogs.length === 0) list.innerHTML = '<div class="text-center text-xs text-gray-600 italic">Nada registrado hoy</div>';
+
+            todayLogs.forEach((l) => {
+                // Find index in main array to delete
+                const realIndex = db.gymLogs.indexOf(l);
                 list.innerHTML += `
-                    <div class="flex justify-between items-center border-b border-gray-800 py-2 text-sm">
+                    <div class="flex justify-between items-center border-b border-gray-800 py-3">
                         <div>
-                            <span class="text-blue-400 font-bold">${l.ex}</span>
-                            <div class="text-xs text-gray-500">${l.routine}</div>
+                            <div class="font-bold text-white text-sm">${l.ex}</div>
+                            <div class="text-[10px] text-gray-500">${l.routine}</div>
                         </div>
-                        <div class="font-mono text-white">${l.kg}kg x ${l.reps}</div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-blue-400 font-mono text-sm">${l.kg}kg <span class="text-gray-500">x</span> ${l.reps}</div>
+                            <button onclick="deleteLog(${realIndex})" class="bg-red-900/30 text-red-500 p-1 rounded hover:bg-red-900">🗑️</button>
+                        </div>
                     </div>`;
             });
         }
 
-        function renderFood() {
-            // Totales de hoy
-            let todayFood = db.food.filter(f => f.date === todayStr);
-            let p=0, c=0, f=0;
-            todayFood.forEach(i => { p+=Number(i.p); c+=Number(i.c); f+=Number(i.f); });
-            document.getElementById('total-prot').innerText = p;
-            document.getElementById('total-carb').innerText = c;
-            document.getElementById('total-fat').innerText = f;
-            document.getElementById('total-cal').innerText = (p*4 + c*4 + f*9);
-            
-            const list = document.getElementById('food-log-list');
-            list.innerHTML = todayFood.map(item => 
-                `<div class="flex justify-between py-2 border-b border-gray-800 text-sm"><span>${item.name}</span><span class="text-gray-500">${item.p}p ${item.c}c ${item.f}f</span></div>`
-            ).join('');
+        function deleteLog(idx) {
+            if(confirm("¿Borrar esta serie?")) {
+                db.gymLogs.splice(idx, 1);
+                saveData();
+                renderTodayGym();
+            }
         }
 
-        // --- 6. CORE LOGIC ---
-        function addXP(amount) {
-            db.stats.xp += amount;
-            if(db.stats.xp >= 100 * db.stats.lvl) {
-                db.stats.xp = 0; db.stats.lvl++; alert("¡NIVEL UP! 🎉");
+        // --- 5. GYM LOGIC (ROUTINE MANAGER) ---
+        function renderRoutinesManager() {
+            const container = document.getElementById('routines-list-container');
+            container.innerHTML = '';
+
+            db.routines.forEach((r, rIdx) => {
+                let exercisesHTML = '';
+                r.exercises.forEach((ex, exIdx) => {
+                    exercisesHTML += `
+                        <div class="flex justify-between items-center bg-black/20 p-2 rounded mb-1">
+                            <span class="text-xs text-gray-300">▪ ${ex}</span>
+                            <button onclick="deleteExerciseFromRoutine(${rIdx}, ${exIdx})" class="text-red-500 font-bold px-2">x</button>
+                        </div>`;
+                });
+
+                container.innerHTML += `
+                    <div class="card border-gray-700">
+                        <div class="flex justify-between items-center mb-3 border-b border-gray-700 pb-2">
+                            <h3 class="font-bold text-lg text-blue-400">${r.name}</h3>
+                            <button onclick="deleteRoutine(${rIdx})" class="text-xs text-red-500 border border-red-900 px-2 py-1 rounded">Eliminar Rutina</button>
+                        </div>
+                        
+                        <div class="mb-3 pl-2 border-l-2 border-gray-700">
+                            ${exercisesHTML}
+                            ${r.exercises.length === 0 ? '<div class="text-xs text-gray-600 italic">Sin ejercicios</div>' : ''}
+                        </div>
+
+                        <div class="flex gap-2 mt-2">
+                            <input type="text" id="new-ex-${rIdx}" placeholder="Añadir ejercicio (ej: Press Banca)" class="text-xs h-8">
+                            <button onclick="addExerciseToRoutine(${rIdx})" class="btn-blue w-auto h-8 px-3 flex items-center text-xs">Añadir</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function createRoutine() {
+            const name = document.getElementById('new-routine-name').value;
+            if(!name) return;
+            db.routines.push({ name: name, exercises: [] });
+            document.getElementById('new-routine-name').value = '';
+            saveData();
+            renderRoutinesManager();
+        }
+
+        function deleteRoutine(idx) {
+            if(confirm("¿Borrar la rutina completa?")) {
+                db.routines.splice(idx, 1);
+                saveData();
+                renderRoutinesManager();
+            }
+        }
+
+        function addExerciseToRoutine(rIdx) {
+            const input = document.getElementById(`new-ex-${rIdx}`);
+            const val = input.value;
+            if(!val) return;
+            db.routines[rIdx].exercises.push(val);
+            saveData();
+            renderRoutinesManager();
+        }
+
+        function deleteExerciseFromRoutine(rIdx, exIdx) {
+            db.routines[rIdx].exercises.splice(exIdx, 1);
+            saveData();
+            renderRoutinesManager();
+        }
+
+        // --- 6. GYM LOGIC (GRAPHS) ---
+        let chartInstance = null;
+
+        function loadGraphSelectors() {
+            // Get all unique exercises ever logged
+            const allExercises = [...new Set(db.gymLogs.map(l => l.ex))].sort();
+            const sel = document.getElementById('sel-graph-exercise');
+            sel.innerHTML = '<option value="">Selecciona ejercicio...</option>';
+            
+            allExercises.forEach(ex => {
+                sel.innerHTML += `<option value="${ex}">${ex}</option>`;
+            });
+        }
+
+        function renderGraph() {
+            const exName = document.getElementById('sel-graph-exercise').value;
+            if(!exName) return;
+
+            // Get data
+            const logs = db.gymLogs.filter(l => l.ex === exName).sort((a,b) => a.timestamp - b.timestamp);
+            
+            // Extract max weight per day
+            const dataMap = {};
+            logs.forEach(l => {
+                if(!dataMap[l.date] || parseFloat(l.kg) > parseFloat(dataMap[l.date])) {
+                    dataMap[l.date] = parseFloat(l.kg);
+                }
+            });
+
+            const labels = Object.keys(dataMap);
+            const values = Object.values(dataMap);
+
+            if(labels.length === 0) {
+                document.getElementById('graph-msg').innerText = "No hay datos suficientes para este ejercicio.";
+                return; 
+            }
+            document.getElementById('graph-msg').innerText = "";
+
+            // Render Chart
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if(chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: `${exName} (KG)`,
+                        data: values,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { beginAtZero: false, grid: { color: '#333' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // --- 7. HABITS MANAGMENT ---
+        function toggleEditHabits() {
+            document.getElementById('habits-editor').classList.toggle('hidden');
+        }
+        function addHabitDef() {
+            const val = document.getElementById('new-habit-input').value;
+            if(!val) return;
+            db.habitsDef.push(val);
+            document.getElementById('new-habit-input').value = '';
+            saveData();
+        }
+        function deleteHabitDef(idx) {
+            db.habitsDef.splice(idx, 1);
+            saveData();
+        }
+        function toggleHabit(h) {
+            if(!db.habitsLog[todayStr]) db.habitsLog[todayStr] = [];
+            const idx = db.habitsLog[todayStr].indexOf(h);
+            
+            if(idx > -1) {
+                db.habitsLog[todayStr].splice(idx, 1); // uncheck
+            } else {
+                db.habitsLog[todayStr].push(h); // check
+                db.stats.xp += 5;
+                db.stats.mente += 1;
+                checkLevelUp();
             }
             saveData();
+        }
+
+        // --- SYSTEM ---
+        function checkLevelUp() {
+            if(db.stats.xp >= 100 * db.stats.lvl) {
+                db.stats.xp = 0;
+                db.stats.lvl++;
+                alert("¡SUBIDA DE NIVEL! 🎉");
+            }
         }
 
         function saveData() {
-            localStorage.setItem('josema_rpg_v2', JSON.stringify(db));
-            renderAll();
-        }
-
-        function toggleHabit(name) {
-            const idx = db.habitsLog[todayStr].indexOf(name);
-            if(idx > -1) db.habitsLog[todayStr].splice(idx, 1);
-            else { db.habitsLog[todayStr].push(name); addXP(5); }
-            saveData();
-        }
-
-        function addFood() {
-            const name = document.getElementById('food-name').value;
-            const p = document.getElementById('food-p').value || 0;
-            const c = document.getElementById('food-c').value || 0;
-            const f = document.getElementById('food-f').value || 0;
-            if(name) {
-                db.food.push({ name, p, c, f, date: todayStr });
-                document.getElementById('food-name').value = '';
-                addXP(5);
-                saveData();
-            }
-        }
-
-        function configRoutines() {
-            const routineName = prompt("Crear nueva rutina (Nombre):");
-            if(routineName) {
-                const exercises = prompt("Escribe los ejercicios separados por coma (ej: Press, Remo, Curl):");
-                if(exercises) {
-                    const exArray = exercises.split(',').map(e => e.trim());
-                    db.routines[routineName] = exArray;
-                    alert("Rutina creada. Selecciónala en el menú.");
-                    loadRoutinesUI();
-                    saveData();
-                }
-            }
+            localStorage.setItem('josema_rpg_v2_1', JSON.stringify(db));
+            renderHome();
         }
         
-        function newHabitPrompt() {
-            const h = prompt("Nuevo hábito:");
-            if(h) { db.habitsDef.push(h); saveData(); }
-        }
-
         function exportData() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
             const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", "josema_rpg_backup.json");
             document.body.appendChild(dl); dl.click(); dl.remove();
         }
+        
+        function hardReset() {
+            if(confirm("¿ESTÁS SEGURO? Se borrará TODO para siempre.")) {
+                localStorage.removeItem('josema_rpg_v2_1');
+                location.reload();
+            }
+        }
 
         // INIT
-        loadRoutinesUI();
-        renderAll();
-
+        setGymMode('log'); // Default view
+        renderHome();
     </script>
 </body>
 </html>
