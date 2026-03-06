@@ -3,140 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life RPG - Motor del Tiempo V1.2</title>
+    <title>Life RPG - Agenda V1.4</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/96/bullseye.png">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <style>
-        body { background-color: #0f0f0f; color: #e0e0e0; font-family: -apple-system, sans-serif; -webkit-user-select: none; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+        body { 
+            background-color: #0f0f0f; color: #e0e0e0; font-family: 'Raleway', sans-serif; 
+            -webkit-user-select: none; overflow: hidden; height: 100vh; display: flex; flex-direction: column; 
+        }
         
-        /* Pestañas Superiores */
-        .tab-nav { display: flex; background: #1a1a1a; padding: 4px; border-radius: 12px; margin: 0 16px 12px 16px; }
-        .tab-btn { flex: 1; text-align: center; padding: 10px; font-size: 14px; font-weight: bold; color: #666; border-radius: 8px; transition: all 0.2s; }
-        .tab-btn.active { background: #3b82f6; color: white; box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4); }
+        h1, h2, h3 { font-weight: 800; letter-spacing: -0.5px; }
 
-        /* Cuadrícula del Calendario */
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 0 16px; }
         .day-cell { 
-            /* Celdas más altas para que quepa el número y el turno */
-            min-height: 65px; 
-            background: #1a1a1a; border-radius: 8px; border: 1px solid #2a2a2a;
+            min-height: 65px; background: #1a1a1a; border-radius: 8px; border: 1px solid #2a2a2a;
             display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
-            padding-top: 4px; font-size: 14px; font-weight: bold; position: relative;
+            padding-top: 4px; font-size: 15px; font-weight: 800; position: relative;
         }
         .day-cell:active { transform: scale(0.95); background: #252525; }
         .day-cell.empty { background: transparent; border: none; pointer-events: none; }
         
-        /* Turno y Puntito */
-        .shift-label { font-size: 11px; color: #9ca3af; font-weight: 800; margin-top: 2px; }
-        .task-dot { width: 6px; height: 6px; background: #f97316; border-radius: 50%; margin-top: auto; margin-bottom: 6px; box-shadow: 0 0 4px #f97316; }
+        .shift-label { font-size: 10px; color: #9ca3af; font-weight: 900; margin-top: 2px; letter-spacing: 0.5px; }
+        .task-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: auto; margin-bottom: 6px; }
 
-        /* Estado del día */
         .day-cell.today { background: #1e3a8a; border-color: #3b82f6; }
         .day-cell.today .shift-label { color: #bfdbfe; }
         
-        /* Inputs y Vistas */
-        .view-section { display: none; flex: 1; overflow-y: auto; padding-bottom: 20px; }
+        .view-section { display: none; flex: 1; overflow-y: auto; padding-bottom: 90px; }
         .view-section.active { display: block; animation: fadeIn 0.2s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        input { background: #252525; border: 1px solid #333; color: white; border-radius: 10px; padding: 14px; width: 100%; font-size: 16px; }
-        input:focus { outline: none; border-color: #3b82f6; }
-        .btn-blue { background: #2563eb; color: white; font-weight: bold; padding: 12px 20px; border-radius: 10px; }
+        input, select { background: #252525; border: 1px solid #333; color: white; border-radius: 10px; padding: 14px; width: 100%; font-size: 15px; font-weight: 600;}
+        input[type="time"] { padding: 12px; }
+        input:focus, select:focus { outline: none; border-color: #3b82f6; }
+        .btn-blue { background: #2563eb; color: white; font-weight: 800; padding: 12px 20px; border-radius: 10px; }
         .btn-icon { background: #1f2937; color: white; padding: 8px 16px; border-radius: 8px; font-weight: bold; }
+
+        .nav-bar { 
+            position: fixed; bottom: 0; width: 100%; background: rgba(15, 15, 15, 0.95); 
+            border-top: 1px solid #333; padding: 10px 0 25px 0; 
+            display: flex; justify-content: space-around; backdrop-filter: blur(10px); z-index: 50; 
+        }
+        .nav-item { color: #555; text-align: center; font-size: 11px; font-weight: 800; flex: 1; transition: 0.2s; }
+        .nav-item.active { color: #3b82f6; }
+        .nav-item svg { width: 24px; height: 24px; margin: 0 auto 4px; display: block; }
+        
+        .week-day-card { background: #1a1a1a; border-left: 4px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+        
+        /* Estilos Subtareas */
+        .subtask-container { border-left: 2px solid #333; margin-left: 12px; padding-left: 12px; margin-top: 8px; }
+        .subtask-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 13px; color: #aaa; }
     </style>
 </head>
 <body>
 
-    <div class="px-5 pt-12 pb-4 border-b border-gray-800 mb-4">
-        <h1 class="text-2xl font-black text-white">Agenda<span class="text-blue-500">RPG</span></h1>
-    </div>
-
-    <div class="tab-nav">
-        <button id="btn-tab-month" onclick="switchView('month')" class="tab-btn active">📅 Visión Mes</button>
-        <button id="btn-tab-day" onclick="switchView('day')" class="tab-btn">📝 Visión Día</button>
+    <div class="px-5 pt-12 pb-4 border-b border-gray-800 mb-2">
+        <h1 class="text-3xl text-white tracking-tight">Agenda<span class="text-blue-500">PRO</span></h1>
     </div>
 
     <div id="view-month" class="view-section active">
         <div class="flex justify-between items-center px-6 py-2 mb-2">
             <button onclick="changeMonth(-1)" class="btn-icon">&lt;</button>
-            <h2 id="month-display" class="text-lg font-bold uppercase tracking-widest text-white">Mes Año</h2>
+            <h2 id="month-display" class="text-lg uppercase tracking-widest text-white">Mes Año</h2>
             <button onclick="changeMonth(1)" class="btn-icon">&gt;</button>
         </div>
-
         <div class="grid grid-cols-7 gap-1 px-4 text-center text-[10px] font-bold text-gray-500 uppercase mb-2">
             <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
         </div>
-        
         <div id="calendar-grid" class="calendar-grid"></div>
     </div>
 
-    <div id="view-day" class="view-section px-4">
-        <div class="flex justify-between items-center bg-gray-900 rounded-xl p-2 mb-6 border border-gray-800">
+    <div id="view-week" class="view-section px-4 pt-2">
+        <h2 class="text-xl text-blue-400 mb-4">Planificación Semanal</h2>
+        <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 mb-6">
+            <select id="rec-day" class="mb-2">
+                <option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option>
+                <option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="0">Domingo</option>
+            </select>
+            <input type="text" id="rec-task" placeholder="Ej: Gym (Pecho y Espalda)" class="mb-2">
+            <select id="rec-color" class="mb-2">
+                <option value="bg-purple-500">🏋️ Entrenamiento (Morado)</option>
+                <option value="bg-blue-500">🔵 Normal (Azul)</option>
+                <option value="bg-green-500">💰 Finanzas (Verde)</option>
+            </select>
+            <button onclick="addRecurring()" class="btn-blue w-full">Añadir Fijo</button>
+        </div>
+        <div id="week-list"></div>
+    </div>
+
+    <div id="view-day" class="view-section px-4 pt-2">
+        <div class="flex justify-between items-center bg-gray-900 rounded-xl p-2 mb-4 border border-gray-800">
             <button onclick="changeDay(-1)" class="btn-icon bg-gray-800">&lt;</button>
             <div class="text-center">
-                <h2 id="day-display" class="text-lg font-bold text-white">Fecha</h2>
-                <p id="day-status" class="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Hoy</p>
+                <h2 id="day-display" class="text-lg text-white">Fecha</h2>
             </div>
             <button onclick="changeDay(1)" class="btn-icon bg-gray-800">&gt;</button>
         </div>
         
-        <div class="mb-4 flex items-center gap-2 bg-blue-900/20 border border-blue-900/50 p-3 rounded-xl">
-            <span class="text-xl">🏭</span>
+        <div class="mb-6 flex items-center gap-3 bg-blue-900/10 border border-blue-900/30 p-3 rounded-xl">
+            <span class="text-2xl">🏭</span>
             <div>
-                <div class="text-[10px] text-gray-400 font-bold uppercase">Turno de Trabajo</div>
-                <div id="day-shift-display" class="font-bold text-blue-400">Calculando...</div>
+                <div class="text-[10px] text-gray-400 uppercase font-extrabold tracking-widest">Turno (Demo)</div>
+                <div id="day-shift-display" class="text-sm font-bold text-blue-400">Calculando...</div>
             </div>
         </div>
 
+        <div class="flex gap-2 mb-2">
+            <input type="text" id="new-task-input" placeholder="Misión / Tarea...">
+        </div>
         <div class="flex gap-2 mb-6">
-            <input type="text" id="new-task-input" placeholder="Añadir misión o nota para este día...">
-            <button onclick="addTask()" class="btn-blue">+</button>
+            <input type="time" id="new-task-time" class="w-24 text-center text-sm" placeholder="Hora">
+            <select id="new-task-color" class="flex-1 text-sm">
+                <option value="bg-blue-500">🔵 Normal</option>
+                <option value="bg-red-500">🔴 Urgente</option>
+                <option value="bg-purple-500">🏋️ Físico</option>
+                <option value="bg-green-500">💰 Dinero</option>
+            </select>
+            <button onclick="addTask()" class="btn-blue w-14 flex items-center justify-center">+</button>
         </div>
 
-        <div id="day-tasks-list" class="space-y-2"></div>
+        <h3 class="text-xs text-gray-500 uppercase tracking-widest mb-2 border-b border-gray-800 pb-1">Agenda del Día</h3>
+        <div id="day-tasks-list" class="space-y-3"></div>
     </div>
 
+    <nav class="nav-bar">
+        <div class="nav-item active" onclick="switchView('month', this)">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            MES
+        </div>
+        <div class="nav-item" onclick="switchView('week', this)">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
+            SEMANA
+        </div>
+        <div class="nav-item" onclick="switchView('day', this)">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
+            DÍA
+        </div>
+    </nav>
+
     <script>
-        /* --- BASE DE DATOS --- */
-        let dbTime = JSON.parse(localStorage.getItem('josema_rpg_time_v2')) || {};
+        /* --- DB & INITS --- */
+        let dbTime = JSON.parse(localStorage.getItem('josema_rpg_time_v4')) || {};
+        let dbRecurring = JSON.parse(localStorage.getItem('josema_rpg_rec_v4')) || {
+            0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[]
+        };
 
         const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
-        // Estados
-        let viewMonthDate = new Date(); // Para el calendario
-        let selectedDayDate = new Date(); // Para la vista de Día
+        let viewMonthDate = new Date(); 
+        let selectedDayDate = new Date(); 
         const realToday = new Date();
 
-        // Helper para sacar la llave YYYY-MM-DD segura
         function getStrDate(dateObj) {
-            const y = dateObj.getFullYear();
-            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const d = String(dateObj.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
+            return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
         }
 
-        /* --- NAVEGACIÓN DE VISTAS --- */
-        function switchView(viewName) {
-            document.getElementById('view-month').classList.remove('active');
-            document.getElementById('view-day').classList.remove('active');
-            document.getElementById('btn-tab-month').classList.remove('active');
-            document.getElementById('btn-tab-day').classList.remove('active');
+        /* --- MIGRACIÓN AUTOMÁTICA (ROLL-OVER) --- */
+        // Esto se ejecuta nada más abrir la app. Busca tareas no completadas del pasado y las trae a HOY.
+        function runTaskRollover() {
+            const todayStr = getStrDate(realToday);
+            if (!dbTime[todayStr]) dbTime[todayStr] = [];
+            let dataChanged = false;
 
-            if(viewName === 'month') {
-                document.getElementById('view-month').classList.add('active');
-                document.getElementById('btn-tab-month').classList.add('active');
-                renderCalendar();
-            } else {
-                document.getElementById('view-day').classList.add('active');
-                document.getElementById('btn-tab-day').classList.add('active');
-                renderDayView();
+            for (const dateKey in dbTime) {
+                if (dateKey < todayStr) { // Si la fecha es del pasado
+                    let pendingTasks = dbTime[dateKey].filter(t => !t.done);
+                    let completedTasks = dbTime[dateKey].filter(t => t.done);
+
+                    if (pendingTasks.length > 0) {
+                        pendingTasks.forEach(t => {
+                            t.isOverdue = true; // Etiqueta de "Atrasado"
+                            t.time = ""; // Quitamos la hora para que no se mezcle con el horario de hoy
+                            dbTime[todayStr].push(t);
+                        });
+                        
+                        dbTime[dateKey] = completedTasks; // Dejamos en el pasado solo lo completado
+                        if (dbTime[dateKey].length === 0) delete dbTime[dateKey];
+                        dataChanged = true;
+                    }
+                }
             }
+            if (dataChanged) localStorage.setItem('josema_rpg_time_v4', JSON.stringify(dbTime));
+        }
+        
+        // Ejecutamos el Roll-Over al inicio
+        runTaskRollover();
+
+        /* --- NAVEGACIÓN --- */
+        function switchView(viewName, el) {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(`view-${viewName}`).classList.add('active');
+            if(el) el.classList.add('active');
+            
+            if(viewName === 'month') renderCalendar();
+            if(viewName === 'week') renderWeekView();
+            if(viewName === 'day') renderDayView();
         }
 
-        /* --- VISTA 1: CALENDARIO --- */
+        /* --- VISTA 1: MES --- */
+        function getHighestPriorityColor(dateStr, dayOfWeek) {
+            let colorsPresent = [];
+            if(dbRecurring[dayOfWeek]) dbRecurring[dayOfWeek].forEach(r => colorsPresent.push(r.color));
+            if(dbTime[dateStr]) dbTime[dateStr].forEach(t => { if(!t.done) colorsPresent.push(t.color); });
+
+            if(colorsPresent.length === 0) return null;
+            if(colorsPresent.includes('bg-red-500')) return 'bg-red-500';
+            if(colorsPresent.includes('bg-purple-500')) return 'bg-purple-500';
+            if(colorsPresent.includes('bg-green-500')) return 'bg-green-500';
+            return 'bg-blue-500';
+        }
+
         function renderCalendar() {
             const year = viewMonthDate.getFullYear();
             const month = viewMonthDate.getMonth();
@@ -144,138 +230,178 @@
 
             const grid = document.getElementById('calendar-grid');
             grid.innerHTML = '';
-
             const firstDayOfMonth = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             let startDay = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
 
-            for (let i = 0; i < startDay; i++) {
-                grid.innerHTML += `<div class="day-cell empty"></div>`;
-            }
+            for (let i = 0; i < startDay; i++) grid.innerHTML += `<div class="day-cell empty"></div>`;
 
             for (let day = 1; day <= daysInMonth; day++) {
-                const iterDate = new Date(year, month, day, 12, 0, 0); // Las 12:00 evita bugs de zona horaria
+                const iterDate = new Date(year, month, day, 12, 0, 0);
                 const dateStr = getStrDate(iterDate);
                 const dayOfWeek = iterDate.getDay();
-                
-                // ¿Es hoy?
                 const isToday = (dateStr === getStrDate(realToday));
-                
-                // PRUEBA DE TURNO: Lunes(1) a Viernes(5) ponemos "TT"
-                let shiftText = "";
-                if (dayOfWeek >= 1 && dayOfWeek <= 5) {
-                    shiftText = "TT";
-                }
-
-                // ¿Hay tareas?
-                const hasTasks = dbTime[dateStr] && dbTime[dateStr].length > 0;
+                let shiftText = (dayOfWeek >= 1 && dayOfWeek <= 5) ? "TT" : "";
+                const dotColor = getHighestPriorityColor(dateStr, dayOfWeek);
 
                 grid.innerHTML += `
-                    <div onclick="selectDayFromCalendar(${year}, ${month}, ${day})" 
-                         class="day-cell ${isToday ? 'today' : ''}">
+                    <div onclick="selectDayFromCalendar(${year}, ${month}, ${day})" class="day-cell ${isToday ? 'today' : ''}">
                         <span>${day}</span>
                         ${shiftText ? `<span class="shift-label">${shiftText}</span>` : ''}
-                        ${hasTasks ? `<div class="task-dot"></div>` : ''}
+                        ${dotColor ? `<div class="task-dot ${dotColor} shadow-[0_0_6px] shadow-${dotColor.split('-')[1]}-500"></div>` : ''}
                     </div>
                 `;
             }
         }
 
-        function changeMonth(step) {
-            viewMonthDate.setMonth(viewMonthDate.getMonth() + step);
-            renderCalendar();
-        }
-
+        function changeMonth(step) { viewMonthDate.setMonth(viewMonthDate.getMonth() + step); renderCalendar(); }
         function selectDayFromCalendar(y, m, d) {
             selectedDayDate = new Date(y, m, d, 12, 0, 0);
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelectorAll('.nav-item')[2].classList.add('active'); 
             switchView('day');
         }
 
-        /* --- VISTA 2: DÍA --- */
-        function renderDayView() {
-            const dateStr = getStrDate(selectedDayDate);
-            const isToday = dateStr === getStrDate(realToday);
-            
-            // Textos Cabecera
-            const dName = dayNames[selectedDayDate.getDay()];
-            const dNum = selectedDayDate.getDate();
-            const mName = monthNames[selectedDayDate.getMonth()];
-            document.getElementById('day-display').innerText = `${dName}, ${dNum} ${mName}`;
-            
-            // Estado (Hoy, Pasado, Futuro)
-            const statusEl = document.getElementById('day-status');
-            selectedDayDate.setHours(0,0,0,0);
-            const todayZero = new Date(realToday.getFullYear(), realToday.getMonth(), realToday.getDate());
-            
-            if (selectedDayDate.getTime() === todayZero.getTime()) {
-                statusEl.innerText = "🔥 HOY"; statusEl.className = "text-[10px] font-bold text-red-500 uppercase";
-            } else if (selectedDayDate < todayZero) {
-                statusEl.innerText = "Pasado"; statusEl.className = "text-[10px] font-bold text-gray-500 uppercase";
-            } else {
-                statusEl.innerText = "Planificación"; statusEl.className = "text-[10px] font-bold text-blue-500 uppercase";
-            }
-
-            // Simulación de Turno en el detalle
-            const dw = selectedDayDate.getDay();
-            if(dw >= 1 && dw <= 5) {
-                document.getElementById('day-shift-display').innerText = "TT (Turno de Prueba)";
-                document.getElementById('day-shift-display').className = "font-bold text-yellow-500";
-            } else {
-                document.getElementById('day-shift-display').innerText = "Libre / Fin de semana";
-                document.getElementById('day-shift-display').className = "font-bold text-green-500";
-            }
-
-            // Render Tareas
-            const list = document.getElementById('day-tasks-list');
+        /* --- VISTA 2: SEMANA --- */
+        function renderWeekView() { /* Igual que V1.3 */
+            const list = document.getElementById('week-list');
             list.innerHTML = '';
-            const tasks = dbTime[dateStr] || [];
-            
-            if (tasks.length === 0) {
-                list.innerHTML = `<p class="text-center text-gray-600 text-sm mt-6 italic">Agenda limpia para este día.</p>`;
-                return;
-            }
-
-            tasks.forEach((t, idx) => {
-                list.innerHTML += `
-                    <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 flex justify-between items-center">
-                        <span class="${t.done ? 'line-through text-gray-600' : 'text-white'} flex-1">${t.text}</span>
-                        <div class="flex gap-2">
-                            <button onclick="toggleTask(${idx})" class="w-8 h-8 rounded border border-gray-600 flex items-center justify-center ${t.done ? 'bg-green-600 border-green-600' : ''}">
-                                ${t.done ? '✓' : ''}
-                            </button>
-                            <button onclick="deleteTask(${idx})" class="text-red-500 bg-red-900/20 px-3 rounded font-bold">X</button>
-                        </div>
-                    </div>
-                `;
+            const order = [1, 2, 3, 4, 5, 6, 0];
+            order.forEach(dayNum => {
+                const tasks = dbRecurring[dayNum] || [];
+                let htmlTasks = '';
+                tasks.forEach((t, idx) => {
+                    htmlTasks += `
+                        <div class="flex justify-between items-center bg-black/40 p-2 rounded mt-1">
+                            <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full ${t.color}"></div><span class="text-sm font-semibold">${t.text}</span></div>
+                            <button onclick="deleteRecurring(${dayNum}, ${idx})" class="text-red-500 font-bold px-2">X</button>
+                        </div>`;
+                });
+                if(tasks.length > 0) list.innerHTML += `<div class="week-day-card border-${tasks[0].color.split('-')[1]}-500"><h3 class="font-bold text-gray-400 uppercase tracking-widest text-[10px]">${dayNames[dayNum]}</h3>${htmlTasks}</div>`;
             });
         }
-
-        function changeDay(step) {
-            selectedDayDate.setDate(selectedDayDate.getDate() + step);
-            // También actualizamos el mes del calendario para que si volvemos, estemos en el mes correcto
-            viewMonthDate = new Date(selectedDayDate); 
-            renderDayView();
+        function addRecurring() {
+            const day = document.getElementById('rec-day').value;
+            const text = document.getElementById('rec-task').value;
+            const color = document.getElementById('rec-color').value;
+            if(!text) return;
+            dbRecurring[day].push({ text, color });
+            localStorage.setItem('josema_rpg_rec_v4', JSON.stringify(dbRecurring));
+            document.getElementById('rec-task').value = ''; renderWeekView();
         }
+        function deleteRecurring(dayNum, idx) { dbRecurring[dayNum].splice(idx, 1); localStorage.setItem('josema_rpg_rec_v4', JSON.stringify(dbRecurring)); renderWeekView(); }
+
+        /* --- VISTA 3: DÍA --- */
+        function renderDayView() {
+            const dateStr = getStrDate(selectedDayDate);
+            const dayOfWeek = selectedDayDate.getDay();
+            
+            document.getElementById('day-display').innerText = `${dayNames[dayOfWeek]}, ${selectedDayDate.getDate()} ${monthNames[selectedDayDate.getMonth()]}`;
+            
+            // Turno
+            if(dayOfWeek >= 1 && dayOfWeek <= 5) {
+                document.getElementById('day-shift-display').innerText = "TT (Prueba)";
+                document.getElementById('day-shift-display').className = "text-sm font-bold text-yellow-500";
+            } else {
+                document.getElementById('day-shift-display').innerText = "Libre";
+                document.getElementById('day-shift-display').className = "text-sm font-bold text-green-500";
+            }
+
+            const list = document.getElementById('day-tasks-list');
+            list.innerHTML = '';
+            let hasItems = false;
+
+            // Recurrentes
+            if(dbRecurring[dayOfWeek] && dbRecurring[dayOfWeek].length > 0) {
+                hasItems = true;
+                dbRecurring[dayOfWeek].forEach(t => {
+                    list.innerHTML += `
+                        <div class="bg-gray-900/50 p-3 rounded-xl border border-gray-800 flex items-center gap-3 opacity-80 mb-2">
+                            <div class="w-4 h-4 rounded-full ${t.color}"></div>
+                            <span class="text-white font-semibold flex-1">${t.text} <span class="text-[10px] text-gray-500 ml-2">(Fijo)</span></span>
+                        </div>`;
+                });
+            }
+
+            // Tareas (Ordenadas por Hora)
+            let tasks = dbTime[dateStr] || [];
+            if(tasks.length > 0) hasItems = true;
+
+            // Time-Blocking: Ordenar
+            tasks.sort((a, b) => {
+                if (!a.time && !b.time) return 0;
+                if (!a.time) return -1; // Sin hora van primero
+                if (!b.time) return 1;
+                return a.time.localeCompare(b.time);
+            });
+
+            tasks.forEach((t, idx) => {
+                // Generar HTML de Subtareas
+                let subHTML = '';
+                if(t.subtasks && t.subtasks.length > 0) {
+                    subHTML = `<div class="subtask-container">`;
+                    t.subtasks.forEach((sub, sIdx) => {
+                        subHTML += `
+                            <div class="subtask-item">
+                                <span class="${sub.done ? 'line-through text-gray-600' : 'text-gray-300'}">- ${sub.text}</span>
+                                <button onclick="toggleSubtask(${idx}, ${sIdx})" class="w-5 h-5 rounded border ${sub.done ? 'bg-gray-600 border-gray-600 text-black' : 'border-gray-500'} flex items-center justify-center text-[10px]">✓</button>
+                            </div>`;
+                    });
+                    subHTML += `</div>`;
+                }
+
+                // Etiquetas especiales (Hora / Atrasado)
+                let metaTags = '';
+                if(t.isOverdue) metaTags += `<span class="bg-red-900/50 text-red-400 text-[10px] px-2 py-0.5 rounded font-bold mr-2">🔴 ATRASADO</span>`;
+                if(t.time) metaTags += `<span class="bg-gray-800 text-blue-300 text-[10px] px-2 py-0.5 rounded font-bold font-mono border border-gray-700">🕒 ${t.time}</span>`;
+
+                list.innerHTML += `
+                    <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 flex flex-col mb-2">
+                        <div class="flex justify-between items-start">
+                            <div class="flex items-start gap-3 flex-1 mt-1">
+                                <div class="w-4 h-4 rounded-full ${t.color} mt-1"></div>
+                                <div>
+                                    <div class="${t.done ? 'line-through text-gray-600' : 'text-white font-semibold'}">${t.text}</div>
+                                    <div class="mt-1">${metaTags}</div>
+                                </div>
+                            </div>
+                            <div class="flex gap-1 ml-2">
+                                <button onclick="addSubtask(${idx})" class="text-gray-400 bg-gray-800 px-2 rounded font-bold text-xs mr-1">+ Sub</button>
+                                <button onclick="toggleTask(${idx})" class="w-8 h-8 rounded border border-gray-600 flex items-center justify-center ${t.done ? 'bg-green-600 border-green-600' : ''}">${t.done ? '✓' : ''}</button>
+                                <button onclick="deleteTask(${idx})" class="text-red-500 bg-red-900/20 px-2 rounded font-bold">X</button>
+                            </div>
+                        </div>
+                        ${subHTML}
+                    </div>`;
+            });
+
+            if(!hasItems) list.innerHTML = `<p class="text-center text-gray-600 text-sm mt-6 italic">Nada planificado.</p>`;
+        }
+
+        function changeDay(step) { selectedDayDate.setDate(selectedDayDate.getDate() + step); viewMonthDate = new Date(selectedDayDate); renderDayView(); }
 
         function addTask() {
             const input = document.getElementById('new-task-input');
+            const timeInput = document.getElementById('new-task-time');
+            const color = document.getElementById('new-task-color').value;
             const text = input.value.trim();
             if (!text) return;
 
             const dateStr = getStrDate(selectedDayDate);
             if (!dbTime[dateStr]) dbTime[dateStr] = [];
             
-            dbTime[dateStr].push({ text: text, done: false });
-            input.value = '';
+            dbTime[dateStr].push({ text: text, color: color, time: timeInput.value, done: false, subtasks: [], isOverdue: false });
             
-            localStorage.setItem('josema_rpg_time_v2', JSON.stringify(dbTime));
+            input.value = '';
+            timeInput.value = '';
+            localStorage.setItem('josema_rpg_time_v4', JSON.stringify(dbTime));
             renderDayView();
         }
 
         function toggleTask(idx) {
             const dateStr = getStrDate(selectedDayDate);
             dbTime[dateStr][idx].done = !dbTime[dateStr][idx].done;
-            localStorage.setItem('josema_rpg_time_v2', JSON.stringify(dbTime));
+            localStorage.setItem('josema_rpg_time_v4', JSON.stringify(dbTime));
             renderDayView();
         }
 
@@ -283,7 +409,25 @@
             const dateStr = getStrDate(selectedDayDate);
             dbTime[dateStr].splice(idx, 1);
             if (dbTime[dateStr].length === 0) delete dbTime[dateStr];
-            localStorage.setItem('josema_rpg_time_v2', JSON.stringify(dbTime));
+            localStorage.setItem('josema_rpg_time_v4', JSON.stringify(dbTime));
+            renderDayView();
+        }
+
+        /* --- SUBTAREAS LÓGICA --- */
+        function addSubtask(idx) {
+            const subText = prompt("Añade un paso a esta misión (Ej: Mirar hoteles):");
+            if(!subText) return;
+            const dateStr = getStrDate(selectedDayDate);
+            if(!dbTime[dateStr][idx].subtasks) dbTime[dateStr][idx].subtasks = [];
+            dbTime[dateStr][idx].subtasks.push({text: subText, done: false});
+            localStorage.setItem('josema_rpg_time_v4', JSON.stringify(dbTime));
+            renderDayView();
+        }
+
+        function toggleSubtask(taskIdx, subIdx) {
+            const dateStr = getStrDate(selectedDayDate);
+            dbTime[dateStr][taskIdx].subtasks[subIdx].done = !dbTime[dateStr][taskIdx].subtasks[subIdx].done;
+            localStorage.setItem('josema_rpg_time_v4', JSON.stringify(dbTime));
             renderDayView();
         }
 
