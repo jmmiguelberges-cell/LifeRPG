@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life RPG - Calendario</title>
+    <title>Life RPG - Motor del Tiempo V1.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -11,198 +11,227 @@
     <style>
         body { background-color: #0f0f0f; color: #e0e0e0; font-family: -apple-system, sans-serif; -webkit-user-select: none; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
         
+        /* Pestañas Superiores */
+        .tab-nav { display: flex; background: #1a1a1a; padding: 4px; border-radius: 12px; margin: 0 16px 12px 16px; }
+        .tab-btn { flex: 1; text-align: center; padding: 10px; font-size: 14px; font-weight: bold; color: #666; border-radius: 8px; transition: all 0.2s; }
+        .tab-btn.active { background: #3b82f6; color: white; box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4); }
+
         /* Cuadrícula del Calendario */
-        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 10px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 0 16px; }
         .day-cell { 
-            aspect-ratio: 1; background: #1a1a1a; border-radius: 8px; border: 1px solid #2a2a2a;
-            display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 4px;
-            font-size: 14px; font-weight: bold; position: relative; transition: all 0.1s;
+            /* Celdas más altas para que quepa el número y el turno */
+            min-height: 65px; 
+            background: #1a1a1a; border-radius: 8px; border: 1px solid #2a2a2a;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
+            padding-top: 4px; font-size: 14px; font-weight: bold; position: relative;
         }
         .day-cell:active { transform: scale(0.95); background: #252525; }
         .day-cell.empty { background: transparent; border: none; pointer-events: none; }
         
-        /* Indicadores visuales en el día */
-        .day-cell.today { background: #1e3a8a; border-color: #3b82f6; color: white; }
-        .day-cell.has-tasks::after {
-            content: ''; position: absolute; bottom: 6px; width: 6px; height: 6px; 
-            background: #fbbf24; border-radius: 50%;
-        }
+        /* Turno y Puntito */
+        .shift-label { font-size: 11px; color: #9ca3af; font-weight: 800; margin-top: 2px; }
+        .task-dot { width: 6px; height: 6px; background: #f97316; border-radius: 50%; margin-top: auto; margin-bottom: 6px; box-shadow: 0 0 4px #f97316; }
 
-        /* Panel Deslizante (Modal del Día) */
-        #day-panel {
-            position: fixed; bottom: -100%; left: 0; width: 100%; height: 85vh;
-            background: #121212; border-top-left-radius: 24px; border-top-right-radius: 24px;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.8); transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 50; display: flex; flex-direction: column;
-        }
-        #day-panel.open { bottom: 0; }
+        /* Estado del día */
+        .day-cell.today { background: #1e3a8a; border-color: #3b82f6; }
+        .day-cell.today .shift-label { color: #bfdbfe; }
         
-        /* Inputs y botones */
-        input { background: #252525; border: 1px solid #333; color: white; border-radius: 10px; padding: 12px; width: 100%; font-size: 16px; }
+        /* Inputs y Vistas */
+        .view-section { display: none; flex: 1; overflow-y: auto; padding-bottom: 20px; }
+        .view-section.active { display: block; animation: fadeIn 0.2s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        input { background: #252525; border: 1px solid #333; color: white; border-radius: 10px; padding: 14px; width: 100%; font-size: 16px; }
         input:focus { outline: none; border-color: #3b82f6; }
-        .btn-blue { background: #2563eb; color: white; font-weight: bold; padding: 12px; border-radius: 10px; }
-        .btn-delete { color: #ef4444; padding: 4px 8px; border-radius: 6px; }
+        .btn-blue { background: #2563eb; color: white; font-weight: bold; padding: 12px 20px; border-radius: 10px; }
+        .btn-icon { background: #1f2937; color: white; padding: 8px 16px; border-radius: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="px-5 pt-12 pb-4 bg-black/90 border-b border-gray-800">
-        <h1 class="text-2xl font-black text-white">El <span class="text-blue-500">Tiempo</span></h1>
-        <p class="text-xs text-gray-400">Motor de planificación RPG</p>
+    <div class="px-5 pt-12 pb-4 border-b border-gray-800 mb-4">
+        <h1 class="text-2xl font-black text-white">Agenda<span class="text-blue-500">RPG</span></h1>
     </div>
 
-    <div class="flex justify-between items-center px-6 py-4">
-        <button onclick="changeMonth(-1)" class="text-blue-500 font-bold text-xl px-4 py-2 bg-gray-900 rounded-lg">&lt;</button>
-        <h2 id="month-display" class="text-lg font-bold uppercase tracking-widest text-white">Mes Año</h2>
-        <button onclick="changeMonth(1)" class="text-blue-500 font-bold text-xl px-4 py-2 bg-gray-900 rounded-lg">&gt;</button>
+    <div class="tab-nav">
+        <button id="btn-tab-month" onclick="switchView('month')" class="tab-btn active">📅 Visión Mes</button>
+        <button id="btn-tab-day" onclick="switchView('day')" class="tab-btn">📝 Visión Día</button>
     </div>
 
-    <div class="flex-1 overflow-y-auto">
-        <div class="grid grid-cols-7 gap-1 px-3 text-center text-[10px] font-bold text-gray-500 uppercase mb-2">
+    <div id="view-month" class="view-section active">
+        <div class="flex justify-between items-center px-6 py-2 mb-2">
+            <button onclick="changeMonth(-1)" class="btn-icon">&lt;</button>
+            <h2 id="month-display" class="text-lg font-bold uppercase tracking-widest text-white">Mes Año</h2>
+            <button onclick="changeMonth(1)" class="btn-icon">&gt;</button>
+        </div>
+
+        <div class="grid grid-cols-7 gap-1 px-4 text-center text-[10px] font-bold text-gray-500 uppercase mb-2">
             <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
         </div>
-        <div id="calendar-grid" class="calendar-grid px-3"></div>
+        
+        <div id="calendar-grid" class="calendar-grid"></div>
     </div>
 
-    <div id="day-panel">
-        <div class="p-4 border-b border-gray-800 flex justify-between items-center">
-            <div>
-                <h3 id="panel-date-display" class="text-xl font-bold text-white">Fecha</h3>
-                <p class="text-xs text-yellow-500" id="panel-status-display">Planificación</p>
+    <div id="view-day" class="view-section px-4">
+        <div class="flex justify-between items-center bg-gray-900 rounded-xl p-2 mb-6 border border-gray-800">
+            <button onclick="changeDay(-1)" class="btn-icon bg-gray-800">&lt;</button>
+            <div class="text-center">
+                <h2 id="day-display" class="text-lg font-bold text-white">Fecha</h2>
+                <p id="day-status" class="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Hoy</p>
             </div>
-            <button onclick="closeDayPanel()" class="bg-gray-800 text-gray-300 px-4 py-2 rounded-full font-bold text-sm">Cerrar</button>
+            <button onclick="changeDay(1)" class="btn-icon bg-gray-800">&gt;</button>
         </div>
         
-        <div class="p-4 flex-1 overflow-y-auto">
-            <div class="flex gap-2 mb-6">
-                <input type="text" id="new-task-input" placeholder="Añadir misión/nota...">
-                <button onclick="addTaskToDay()" class="btn-blue px-5">+</button>
+        <div class="mb-4 flex items-center gap-2 bg-blue-900/20 border border-blue-900/50 p-3 rounded-xl">
+            <span class="text-xl">🏭</span>
+            <div>
+                <div class="text-[10px] text-gray-400 font-bold uppercase">Turno de Trabajo</div>
+                <div id="day-shift-display" class="font-bold text-blue-400">Calculando...</div>
             </div>
-
-            <div id="day-tasks-list" class="space-y-2"></div>
         </div>
-    </div>
 
-    <div id="overlay" onclick="closeDayPanel()" class="fixed inset-0 bg-black/60 z-40 hidden opacity-0 transition-opacity duration-300"></div>
+        <div class="flex gap-2 mb-6">
+            <input type="text" id="new-task-input" placeholder="Añadir misión o nota para este día...">
+            <button onclick="addTask()" class="btn-blue">+</button>
+        </div>
+
+        <div id="day-tasks-list" class="space-y-2"></div>
+    </div>
 
     <script>
-        /* --- 1. BASE DE DATOS DEL TIEMPO --- */
-        // La magia de guardar datos por fechas exactas (YYYY-MM-DD)
-        let dbTime = JSON.parse(localStorage.getItem('josema_rpg_time')) || {};
-        
-        /* Ejemplo de estructura interna:
-        dbTime = {
-            "2026-03-06": [ {text: "Ir al Gym", done: true}, {text: "Comprar pan", done: false} ],
-            "2026-03-15": [ {text: "Vuelos Tailandia", done: false} ]
-        }
-        */
-
-        // Variables de estado
-        let currentDate = new Date(); // El mes que estamos mirando en pantalla
-        const realToday = new Date(); // El día real en el que vivimos (Hoy)
-        let selectedDateStr = ""; // El día que hemos tocado para abrir el panel
+        /* --- BASE DE DATOS --- */
+        let dbTime = JSON.parse(localStorage.getItem('josema_rpg_time_v2')) || {};
 
         const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+        const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 
-        /* --- 2. RENDERIZAR EL CALENDARIO --- */
+        // Estados
+        let viewMonthDate = new Date(); // Para el calendario
+        let selectedDayDate = new Date(); // Para la vista de Día
+        const realToday = new Date();
+
+        // Helper para sacar la llave YYYY-MM-DD segura
+        function getStrDate(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        /* --- NAVEGACIÓN DE VISTAS --- */
+        function switchView(viewName) {
+            document.getElementById('view-month').classList.remove('active');
+            document.getElementById('view-day').classList.remove('active');
+            document.getElementById('btn-tab-month').classList.remove('active');
+            document.getElementById('btn-tab-day').classList.remove('active');
+
+            if(viewName === 'month') {
+                document.getElementById('view-month').classList.add('active');
+                document.getElementById('btn-tab-month').classList.add('active');
+                renderCalendar();
+            } else {
+                document.getElementById('view-day').classList.add('active');
+                document.getElementById('btn-tab-day').classList.add('active');
+                renderDayView();
+            }
+        }
+
+        /* --- VISTA 1: CALENDARIO --- */
         function renderCalendar() {
-            const year = currentDate.getFullYear();
-            const month = currentDate.getMonth();
-            
-            // Actualizar título
+            const year = viewMonthDate.getFullYear();
+            const month = viewMonthDate.getMonth();
             document.getElementById('month-display').innerText = `${monthNames[month]} ${year}`;
 
             const grid = document.getElementById('calendar-grid');
             grid.innerHTML = '';
 
-            // Cálculos matemáticos del calendario
-            const firstDayOfMonth = new Date(year, month, 1).getDay(); // Qué día de la semana empieza
-            const daysInMonth = new Date(year, month + 1, 0).getDate(); // Cuántos días tiene el mes
-            
-            // Ajustar para que la semana empiece en Lunes (0=Lun, 1=Mar... 6=Dom)
+            const firstDayOfMonth = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
             let startDay = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
 
-            // Rellenar huecos vacíos antes del día 1
             for (let i = 0; i < startDay; i++) {
                 grid.innerHTML += `<div class="day-cell empty"></div>`;
             }
 
-            // Crear los días del mes
             for (let day = 1; day <= daysInMonth; day++) {
-                // Formatear fecha a YYYY-MM-DD para buscar en la base de datos
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const iterDate = new Date(year, month, day, 12, 0, 0); // Las 12:00 evita bugs de zona horaria
+                const dateStr = getStrDate(iterDate);
+                const dayOfWeek = iterDate.getDay();
                 
-                // ¿Es el día real de hoy?
-                const isToday = (day === realToday.getDate() && month === realToday.getMonth() && year === realToday.getFullYear());
+                // ¿Es hoy?
+                const isToday = (dateStr === getStrDate(realToday));
                 
-                // ¿Tiene tareas guardadas este día?
+                // PRUEBA DE TURNO: Lunes(1) a Viernes(5) ponemos "TT"
+                let shiftText = "";
+                if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                    shiftText = "TT";
+                }
+
+                // ¿Hay tareas?
                 const hasTasks = dbTime[dateStr] && dbTime[dateStr].length > 0;
 
                 grid.innerHTML += `
-                    <div onclick="openDayPanel('${dateStr}', ${day}, ${month}, ${year})" 
-                         class="day-cell ${isToday ? 'today' : ''} ${hasTasks ? 'has-tasks' : ''}">
-                        ${day}
+                    <div onclick="selectDayFromCalendar(${year}, ${month}, ${day})" 
+                         class="day-cell ${isToday ? 'today' : ''}">
+                        <span>${day}</span>
+                        ${shiftText ? `<span class="shift-label">${shiftText}</span>` : ''}
+                        ${hasTasks ? `<div class="task-dot"></div>` : ''}
                     </div>
                 `;
             }
         }
 
-        // Cambiar de mes con las flechas
         function changeMonth(step) {
-            currentDate.setMonth(currentDate.getMonth() + step);
+            viewMonthDate.setMonth(viewMonthDate.getMonth() + step);
             renderCalendar();
         }
 
-        /* --- 3. LÓGICA DEL PANEL DEL DÍA --- */
-        function openDayPanel(dateStr, day, month, year) {
-            selectedDateStr = dateStr;
+        function selectDayFromCalendar(y, m, d) {
+            selectedDayDate = new Date(y, m, d, 12, 0, 0);
+            switchView('day');
+        }
+
+        /* --- VISTA 2: DÍA --- */
+        function renderDayView() {
+            const dateStr = getStrDate(selectedDayDate);
+            const isToday = dateStr === getStrDate(realToday);
             
-            // Actualizar textos del panel
-            document.getElementById('panel-date-display').innerText = `${day} de ${monthNames[month]} ${year}`;
+            // Textos Cabecera
+            const dName = dayNames[selectedDayDate.getDay()];
+            const dNum = selectedDayDate.getDate();
+            const mName = monthNames[selectedDayDate.getMonth()];
+            document.getElementById('day-display').innerText = `${dName}, ${dNum} ${mName}`;
             
-            // Comprobar si es pasado, presente o futuro
-            const selectedDateObj = new Date(year, month, day);
-            selectedDateObj.setHours(0,0,0,0);
-            const todayObj = new Date(realToday.getFullYear(), realToday.getMonth(), realToday.getDate());
+            // Estado (Hoy, Pasado, Futuro)
+            const statusEl = document.getElementById('day-status');
+            selectedDayDate.setHours(0,0,0,0);
+            const todayZero = new Date(realToday.getFullYear(), realToday.getMonth(), realToday.getDate());
             
-            const statusText = document.getElementById('panel-status-display');
-            if (selectedDateObj.getTime() === todayObj.getTime()) {
-                statusText.innerText = "🔥 HOY";
-                statusText.className = "text-xs font-bold text-red-500";
-            } else if (selectedDateObj < todayObj) {
-                statusText.innerText = "⏳ Registro Pasado";
-                statusText.className = "text-xs font-bold text-gray-500";
+            if (selectedDayDate.getTime() === todayZero.getTime()) {
+                statusEl.innerText = "🔥 HOY"; statusEl.className = "text-[10px] font-bold text-red-500 uppercase";
+            } else if (selectedDayDate < todayZero) {
+                statusEl.innerText = "Pasado"; statusEl.className = "text-[10px] font-bold text-gray-500 uppercase";
             } else {
-                statusText.innerText = "🚀 Planificación Futura";
-                statusText.className = "text-xs font-bold text-blue-500";
+                statusEl.innerText = "Planificación"; statusEl.className = "text-[10px] font-bold text-blue-500 uppercase";
             }
 
-            renderTasksForDay();
+            // Simulación de Turno en el detalle
+            const dw = selectedDayDate.getDay();
+            if(dw >= 1 && dw <= 5) {
+                document.getElementById('day-shift-display').innerText = "TT (Turno de Prueba)";
+                document.getElementById('day-shift-display').className = "font-bold text-yellow-500";
+            } else {
+                document.getElementById('day-shift-display').innerText = "Libre / Fin de semana";
+                document.getElementById('day-shift-display').className = "font-bold text-green-500";
+            }
 
-            // Animación de abrir
-            document.getElementById('day-panel').classList.add('open');
-            const overlay = document.getElementById('overlay');
-            overlay.classList.remove('hidden');
-            setTimeout(() => overlay.classList.remove('opacity-0'), 10); // Trigger transition
-        }
-
-        function closeDayPanel() {
-            document.getElementById('day-panel').classList.remove('open');
-            const overlay = document.getElementById('overlay');
-            overlay.classList.add('opacity-0');
-            setTimeout(() => overlay.classList.add('hidden'), 300); // Wait for transition
-            renderCalendar(); // Refrescar calendario por si añadimos tareas (para poner el puntito amarillo)
-        }
-
-        /* --- 4. GESTIÓN DE TAREAS/NOTAS --- */
-        function renderTasksForDay() {
+            // Render Tareas
             const list = document.getElementById('day-tasks-list');
             list.innerHTML = '';
-            
-            const tasks = dbTime[selectedDateStr] || [];
+            const tasks = dbTime[dateStr] || [];
             
             if (tasks.length === 0) {
-                list.innerHTML = `<p class="text-center text-gray-600 text-sm mt-10 italic">No hay registros para este día.</p>`;
+                list.innerHTML = `<p class="text-center text-gray-600 text-sm mt-6 italic">Agenda limpia para este día.</p>`;
                 return;
             }
 
@@ -210,57 +239,55 @@
                 list.innerHTML += `
                     <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 flex justify-between items-center">
                         <span class="${t.done ? 'line-through text-gray-600' : 'text-white'} flex-1">${t.text}</span>
-                        <div class="flex gap-2 items-center">
-                            <button onclick="toggleTask(${idx})" class="w-8 h-8 rounded-full border border-gray-600 flex items-center justify-center ${t.done ? 'bg-green-600 border-green-600' : ''}">
+                        <div class="flex gap-2">
+                            <button onclick="toggleTask(${idx})" class="w-8 h-8 rounded border border-gray-600 flex items-center justify-center ${t.done ? 'bg-green-600 border-green-600' : ''}">
                                 ${t.done ? '✓' : ''}
                             </button>
-                            <button onclick="deleteTask(${idx})" class="btn-delete">🗑️</button>
+                            <button onclick="deleteTask(${idx})" class="text-red-500 bg-red-900/20 px-3 rounded font-bold">X</button>
                         </div>
                     </div>
                 `;
             });
         }
 
-        function addTaskToDay() {
+        function changeDay(step) {
+            selectedDayDate.setDate(selectedDayDate.getDate() + step);
+            // También actualizamos el mes del calendario para que si volvemos, estemos en el mes correcto
+            viewMonthDate = new Date(selectedDayDate); 
+            renderDayView();
+        }
+
+        function addTask() {
             const input = document.getElementById('new-task-input');
             const text = input.value.trim();
             if (!text) return;
 
-            // Si el día no existe en la base de datos, lo creamos
-            if (!dbTime[selectedDateStr]) {
-                dbTime[selectedDateStr] = [];
-            }
-
-            dbTime[selectedDateStr].push({ text: text, done: false });
+            const dateStr = getStrDate(selectedDayDate);
+            if (!dbTime[dateStr]) dbTime[dateStr] = [];
+            
+            dbTime[dateStr].push({ text: text, done: false });
             input.value = '';
             
-            saveData();
-            renderTasksForDay();
+            localStorage.setItem('josema_rpg_time_v2', JSON.stringify(dbTime));
+            renderDayView();
         }
 
         function toggleTask(idx) {
-            dbTime[selectedDateStr][idx].done = !dbTime[selectedDateStr][idx].done;
-            saveData();
-            renderTasksForDay();
+            const dateStr = getStrDate(selectedDayDate);
+            dbTime[dateStr][idx].done = !dbTime[dateStr][idx].done;
+            localStorage.setItem('josema_rpg_time_v2', JSON.stringify(dbTime));
+            renderDayView();
         }
 
         function deleteTask(idx) {
-            if (confirm("¿Borrar misión?")) {
-                dbTime[selectedDateStr].splice(idx, 1);
-                // Si borramos la última tarea, limpiamos el día de la base de datos para no acumular basura
-                if (dbTime[selectedDateStr].length === 0) {
-                    delete dbTime[selectedDateStr];
-                }
-                saveData();
-                renderTasksForDay();
-            }
+            const dateStr = getStrDate(selectedDayDate);
+            dbTime[dateStr].splice(idx, 1);
+            if (dbTime[dateStr].length === 0) delete dbTime[dateStr];
+            localStorage.setItem('josema_rpg_time_v2', JSON.stringify(dbTime));
+            renderDayView();
         }
 
-        function saveData() {
-            localStorage.setItem('josema_rpg_time', JSON.stringify(dbTime));
-        }
-
-        // INICIALIZAR
+        // INIT
         renderCalendar();
     </script>
 </body>
