@@ -3,559 +3,265 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life RPG V2.1 Custom</title>
+    <title>Life RPG - Calendario</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
     <style>
-        /* Base */
-        html, body { height: 100%; overflow: hidden; background-color: #0f0f0f; color: #e0e0e0; font-family: -apple-system, system-ui, sans-serif; -webkit-user-select: none; }
-        #main-container { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 90px; }
+        body { background-color: #0f0f0f; color: #e0e0e0; font-family: -apple-system, sans-serif; -webkit-user-select: none; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
         
-        /* Utilidades */
-        .tab-content { display: none; }
-        .active-tab { display: block; animation: fadeUp 0.2s ease-out; }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* Cuadrícula del Calendario */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 10px; }
+        .day-cell { 
+            aspect-ratio: 1; background: #1a1a1a; border-radius: 8px; border: 1px solid #2a2a2a;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 4px;
+            font-size: 14px; font-weight: bold; position: relative; transition: all 0.1s;
+        }
+        .day-cell:active { transform: scale(0.95); background: #252525; }
+        .day-cell.empty { background: transparent; border: none; pointer-events: none; }
         
-        .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
-        input, select { background: #252525; border: 1px solid #333; color: white; border-radius: 10px; padding: 12px; width: 100%; font-size: 16px; margin-bottom: 8px; }
-        input:focus, select:focus { outline: none; border-color: #3b82f6; }
-        
-        /* Botones */
-        .btn-blue { background: #2563eb; color: white; font-weight: bold; padding: 12px; border-radius: 10px; width: 100%; text-align: center; }
-        .btn-red { background: #dc2626; color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; }
-        .btn-icon { font-size: 18px; padding: 8px; }
+        /* Indicadores visuales en el día */
+        .day-cell.today { background: #1e3a8a; border-color: #3b82f6; color: white; }
+        .day-cell.has-tasks::after {
+            content: ''; position: absolute; bottom: 6px; width: 6px; height: 6px; 
+            background: #fbbf24; border-radius: 50%;
+        }
 
-        /* Navegación */
-        .nav-bar { position: absolute; bottom: 0; width: 100%; background: rgba(15,15,15,0.95); border-top: 1px solid #333; display: flex; padding: 10px 0 25px 0; backdrop-filter: blur(10px); z-index: 50; }
-        .nav-item { flex: 1; text-align: center; color: #666; font-size: 10px; }
-        .nav-item.active { color: #3b82f6; }
-        .nav-item svg { width: 24px; height: 24px; margin: 0 auto 4px; display: block; }
-
-        /* Gráficas */
-        canvas { max-height: 250px; width: 100%; }
+        /* Panel Deslizante (Modal del Día) */
+        #day-panel {
+            position: fixed; bottom: -100%; left: 0; width: 100%; height: 85vh;
+            background: #121212; border-top-left-radius: 24px; border-top-right-radius: 24px;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.8); transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 50; display: flex; flex-direction: column;
+        }
+        #day-panel.open { bottom: 0; }
         
-        /* Sub-Tabs personalizadas */
-        .pill-menu { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 12px; }
-        .pill { white-space: nowrap; padding: 6px 12px; background: #262626; border-radius: 20px; font-size: 13px; color: #aaa; border: 1px solid #333; }
-        .pill.active { background: #2563eb; color: white; border-color: #2563eb; }
+        /* Inputs y botones */
+        input { background: #252525; border: 1px solid #333; color: white; border-radius: 10px; padding: 12px; width: 100%; font-size: 16px; }
+        input:focus { outline: none; border-color: #3b82f6; }
+        .btn-blue { background: #2563eb; color: white; font-weight: bold; padding: 12px; border-radius: 10px; }
+        .btn-delete { color: #ef4444; padding: 4px 8px; border-radius: 6px; }
     </style>
 </head>
 <body>
 
-    <div class="px-5 pt-12 pb-3 bg-black/90 sticky top-0 z-40 border-b border-gray-800 flex justify-between items-center">
-        <div>
-            <h1 class="text-xl font-black text-white">Josema<span class="text-blue-500">RPG</span></h1>
-            <p class="text-[10px] text-gray-400 uppercase tracking-widest" id="dateDisplay">DATE</p>
+    <div class="px-5 pt-12 pb-4 bg-black/90 border-b border-gray-800">
+        <h1 class="text-2xl font-black text-white">El <span class="text-blue-500">Tiempo</span></h1>
+        <p class="text-xs text-gray-400">Motor de planificación RPG</p>
+    </div>
+
+    <div class="flex justify-between items-center px-6 py-4">
+        <button onclick="changeMonth(-1)" class="text-blue-500 font-bold text-xl px-4 py-2 bg-gray-900 rounded-lg">&lt;</button>
+        <h2 id="month-display" class="text-lg font-bold uppercase tracking-widest text-white">Mes Año</h2>
+        <button onclick="changeMonth(1)" class="text-blue-500 font-bold text-xl px-4 py-2 bg-gray-900 rounded-lg">&gt;</button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto">
+        <div class="grid grid-cols-7 gap-1 px-3 text-center text-[10px] font-bold text-gray-500 uppercase mb-2">
+            <div>Lun</div><div>Mar</div><div>Mié</div><div>Jue</div><div>Vie</div><div>Sáb</div><div>Dom</div>
         </div>
-        <div class="text-right">
-            <div class="text-yellow-400 font-bold text-lg">LVL <span id="lvl">1</span></div>
-            <div class="w-20 bg-gray-800 h-1 rounded-full mt-1 overflow-hidden"><div id="xp-bar" class="bg-yellow-400 h-full w-0"></div></div>
+        <div id="calendar-grid" class="calendar-grid px-3"></div>
+    </div>
+
+    <div id="day-panel">
+        <div class="p-4 border-b border-gray-800 flex justify-between items-center">
+            <div>
+                <h3 id="panel-date-display" class="text-xl font-bold text-white">Fecha</h3>
+                <p class="text-xs text-yellow-500" id="panel-status-display">Planificación</p>
+            </div>
+            <button onclick="closeDayPanel()" class="bg-gray-800 text-gray-300 px-4 py-2 rounded-full font-bold text-sm">Cerrar</button>
+        </div>
+        
+        <div class="p-4 flex-1 overflow-y-auto">
+            <div class="flex gap-2 mb-6">
+                <input type="text" id="new-task-input" placeholder="Añadir misión/nota...">
+                <button onclick="addTaskToDay()" class="btn-blue px-5">+</button>
+            </div>
+
+            <div id="day-tasks-list" class="space-y-2"></div>
         </div>
     </div>
 
-    <div id="main-container" class="px-4 py-4">
-
-        <div id="tab-home" class="tab-content active-tab">
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div class="card flex flex-col items-center justify-center py-4">
-                    <span class="text-2xl">🦁</span>
-                    <span class="text-xs text-gray-500 mt-1 uppercase">Físico</span>
-                    <span id="stat-fisico" class="text-xl font-bold">0</span>
-                </div>
-                <div class="card flex flex-col items-center justify-center py-4">
-                    <span class="text-2xl">🧠</span>
-                    <span class="text-xs text-gray-500 mt-1 uppercase">Mente</span>
-                    <span id="stat-mente" class="text-xl font-bold">0</span>
-                </div>
-            </div>
-
-            <div class="flex justify-between items-center mb-2">
-                <h3 class="font-bold text-gray-300">Hábitos de Hoy</h3>
-                <button onclick="toggleEditHabits()" class="text-xs text-blue-400">Editar Lista</button>
-            </div>
-            
-            <div id="habits-editor" class="hidden card bg-blue-900/10 border-blue-900 mb-4">
-                <h4 class="text-xs font-bold text-blue-400 mb-2">AÑADIR HÁBITO</h4>
-                <div class="flex gap-2">
-                    <input type="text" id="new-habit-input" placeholder="Ej: Leer 10 min">
-                    <button onclick="addHabitDef()" class="btn-blue w-auto px-4">+</button>
-                </div>
-                <div id="habits-manage-list" class="mt-2 space-y-1"></div>
-            </div>
-
-            <div id="habits-list" class="space-y-2"></div>
-        </div>
-
-        <div id="tab-gym" class="tab-content">
-            <div class="flex bg-gray-900 p-1 rounded-xl mb-4 border border-gray-800">
-                <button onclick="setGymMode('log')" id="btn-mode-log" class="flex-1 py-2 text-xs font-bold rounded-lg bg-gray-800 text-white shadow">REGISTRAR</button>
-                <button onclick="setGymMode('routines')" id="btn-mode-routines" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500">MIS RUTINAS</button>
-                <button onclick="setGymMode('stats')" id="btn-mode-stats" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500">GRÁFICAS</button>
-            </div>
-
-            <div id="gym-view-log">
-                <div class="card border-blue-900/30">
-                    <label class="text-[10px] text-gray-500 uppercase font-bold">1. Selecciona Rutina</label>
-                    <select id="sel-routine" onchange="loadExercisesForLog()" class="mb-3 font-bold bg-gray-800 border-gray-700"></select>
-                    
-                    <label class="text-[10px] text-gray-500 uppercase font-bold">2. Selecciona Ejercicio</label>
-                    <select id="sel-exercise" class="mb-3 bg-gray-800 border-gray-700">
-                        <option value="">-- Primero elige rutina --</option>
-                    </select>
-
-                    <div class="grid grid-cols-3 gap-2">
-                        <input type="number" id="inp-kg" placeholder="KG" class="text-center font-bold text-white">
-                        <input type="number" id="inp-reps" placeholder="REPS" class="text-center font-bold text-white">
-                        <input type="number" id="inp-rpe" placeholder="RPE" class="text-center text-gray-400">
-                    </div>
-                    <button onclick="saveSet()" class="btn-blue mt-2">GUARDAR SERIE</button>
-                </div>
-
-                <h3 class="text-xs font-bold text-gray-500 mt-6 mb-2 flex justify-between">
-                    <span>HISTORIAL DE HOY</span>
-                    <button onclick="clearTodayGym()" class="text-red-500 text-[10px]">Borrar todo hoy</button>
-                </h3>
-                <div id="gym-today-list" class="space-y-2 pb-10"></div>
-            </div>
-
-            <div id="gym-view-routines" class="hidden">
-                <div class="card bg-gray-800 border-dashed border-gray-600">
-                    <h4 class="text-sm font-bold text-white mb-2">+ Crear Nueva Rutina</h4>
-                    <div class="flex gap-2">
-                        <input type="text" id="new-routine-name" placeholder="Nombre (ej: Pierna)">
-                        <button onclick="createRoutine()" class="btn-blue w-auto px-4">Crear</button>
-                    </div>
-                </div>
-
-                <div id="routines-list-container" class="space-y-4">
-                    </div>
-            </div>
-
-            <div id="gym-view-stats" class="hidden">
-                <div class="card">
-                    <label class="text-xs text-gray-500 uppercase">¿Qué ejercicio quieres ver?</label>
-                    <select id="sel-graph-exercise" onchange="renderGraph()" class="mt-1 bg-gray-900"></select>
-                </div>
-                <div class="card p-2">
-                    <canvas id="mainChart"></canvas>
-                </div>
-                <p id="graph-msg" class="text-center text-xs text-gray-500 mt-2">Selecciona un ejercicio para ver tu progreso.</p>
-            </div>
-        </div>
-
-        <div id="tab-data" class="tab-content">
-            <h2 class="text-xl font-bold mb-4">Datos & Ajustes</h2>
-            <div class="card">
-                <button onclick="exportData()" class="btn-blue mb-2 bg-gray-700">💾 Exportar Copia de Seguridad</button>
-                <div class="text-xs text-gray-500 text-center mt-2">
-                    Guarda el archivo .json en tus archivos. <br>
-                    Para restaurar, envíame el archivo y te daré un código importador.
-                </div>
-                <button onclick="hardReset()" class="mt-8 w-full py-3 text-red-500 text-xs font-bold border border-red-900 rounded-lg hover:bg-red-900/20">☠️ BORRAR TODO (RESET DE FÁBRICA)</button>
-            </div>
-        </div>
-
-    </div>
-
-    <nav class="nav-bar">
-        <div class="nav-item active" onclick="switchTab('tab-home', this)">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-            DASHBOARD
-        </div>
-        <div class="nav-item" onclick="switchTab('tab-gym', this)">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            GYM
-        </div>
-        <div class="nav-item" onclick="switchTab('tab-data', this)">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-            AJUSTES
-        </div>
-    </nav>
+    <div id="overlay" onclick="closeDayPanel()" class="fixed inset-0 bg-black/60 z-40 hidden opacity-0 transition-opacity duration-300"></div>
 
     <script>
-        /* --- 1. CORE & DATA --- */
-        const todayStr = new Date().toLocaleDateString('es-ES');
-        document.getElementById('dateDisplay').textContent = todayStr;
+        /* --- 1. BASE DE DATOS DEL TIEMPO --- */
+        // La magia de guardar datos por fechas exactas (YYYY-MM-DD)
+        let dbTime = JSON.parse(localStorage.getItem('josema_rpg_time')) || {};
+        
+        /* Ejemplo de estructura interna:
+        dbTime = {
+            "2026-03-06": [ {text: "Ir al Gym", done: true}, {text: "Comprar pan", done: false} ],
+            "2026-03-15": [ {text: "Vuelos Tailandia", done: false} ]
+        }
+        */
 
-        let db = {
-            stats: { lvl: 1, xp: 0, fisico: 0, mente: 0 },
-            habitsDef: ["Beber Agua", "Leer"],
-            habitsLog: {}, // { "date": ["Habito1"] }
-            routines: [], // [ {name: "Pecho", exercises: ["Press", "Aperturas"]} ]
-            gymLogs: [] // { date, routine, ex, kg, reps, rpe }
-        };
+        // Variables de estado
+        let currentDate = new Date(); // El mes que estamos mirando en pantalla
+        const realToday = new Date(); // El día real en el que vivimos (Hoy)
+        let selectedDateStr = ""; // El día que hemos tocado para abrir el panel
 
-        // Cargar y Migrar
-        const saved = localStorage.getItem('josema_rpg_v2_1');
-        if (saved) {
-            db = JSON.parse(saved);
-        } else {
-            // Inicializar con ejemplo vacío o básico
-            if(db.routines.length === 0) {
-                db.routines.push({ name: "Ejemplo: Full Body", exercises: ["Sentadilla", "Flexiones"] });
+        const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+        /* --- 2. RENDERIZAR EL CALENDARIO --- */
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            // Actualizar título
+            document.getElementById('month-display').innerText = `${monthNames[month]} ${year}`;
+
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+
+            // Cálculos matemáticos del calendario
+            const firstDayOfMonth = new Date(year, month, 1).getDay(); // Qué día de la semana empieza
+            const daysInMonth = new Date(year, month + 1, 0).getDate(); // Cuántos días tiene el mes
+            
+            // Ajustar para que la semana empiece en Lunes (0=Lun, 1=Mar... 6=Dom)
+            let startDay = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
+
+            // Rellenar huecos vacíos antes del día 1
+            for (let i = 0; i < startDay; i++) {
+                grid.innerHTML += `<div class="day-cell empty"></div>`;
+            }
+
+            // Crear los días del mes
+            for (let day = 1; day <= daysInMonth; day++) {
+                // Formatear fecha a YYYY-MM-DD para buscar en la base de datos
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                
+                // ¿Es el día real de hoy?
+                const isToday = (day === realToday.getDate() && month === realToday.getMonth() && year === realToday.getFullYear());
+                
+                // ¿Tiene tareas guardadas este día?
+                const hasTasks = dbTime[dateStr] && dbTime[dateStr].length > 0;
+
+                grid.innerHTML += `
+                    <div onclick="openDayPanel('${dateStr}', ${day}, ${month}, ${year})" 
+                         class="day-cell ${isToday ? 'today' : ''} ${hasTasks ? 'has-tasks' : ''}">
+                        ${day}
+                    </div>
+                `;
             }
         }
 
-        // --- 2. NAVIGATION ---
-        function switchTab(id, el) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active-tab'));
-            document.getElementById(id).classList.add('active-tab');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
+        // Cambiar de mes con las flechas
+        function changeMonth(step) {
+            currentDate.setMonth(currentDate.getMonth() + step);
+            renderCalendar();
         }
 
-        function setGymMode(mode) {
-            // Ocultar todas las vistas de gym
-            document.getElementById('gym-view-log').classList.add('hidden');
-            document.getElementById('gym-view-routines').classList.add('hidden');
-            document.getElementById('gym-view-stats').classList.add('hidden');
+        /* --- 3. LÓGICA DEL PANEL DEL DÍA --- */
+        function openDayPanel(dateStr, day, month, year) {
+            selectedDateStr = dateStr;
             
-            // Reset botones
-            document.getElementById('btn-mode-log').className = "flex-1 py-2 text-xs font-bold rounded-lg text-gray-500";
-            document.getElementById('btn-mode-routines').className = "flex-1 py-2 text-xs font-bold rounded-lg text-gray-500";
-            document.getElementById('btn-mode-stats').className = "flex-1 py-2 text-xs font-bold rounded-lg text-gray-500";
-
-            // Activar seleccionada
-            if(mode === 'log') {
-                document.getElementById('gym-view-log').classList.remove('hidden');
-                document.getElementById('btn-mode-log').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-gray-800 text-white shadow";
-                loadLogSelectors();
-                renderTodayGym();
-            } else if(mode === 'routines') {
-                document.getElementById('gym-view-routines').classList.remove('hidden');
-                document.getElementById('btn-mode-routines').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-gray-800 text-white shadow";
-                renderRoutinesManager();
-            } else if(mode === 'stats') {
-                document.getElementById('gym-view-stats').classList.remove('hidden');
-                document.getElementById('btn-mode-stats').className = "flex-1 py-2 text-xs font-bold rounded-lg bg-gray-800 text-white shadow";
-                loadGraphSelectors();
-            }
-        }
-
-        // --- 3. RENDER DASHBOARD ---
-        function renderHome() {
-            document.getElementById('lvl').innerText = db.stats.lvl;
-            document.getElementById('xp-bar').style.width = ((db.stats.xp / (100 * db.stats.lvl)) * 100) + '%';
-            document.getElementById('stat-fisico').innerText = db.stats.fisico;
-            document.getElementById('stat-mente').innerText = db.stats.mente;
-
-            // Habits List
-            const list = document.getElementById('habits-list');
-            list.innerHTML = '';
-            const doneToday = db.habitsLog[todayStr] || [];
+            // Actualizar textos del panel
+            document.getElementById('panel-date-display').innerText = `${day} de ${monthNames[month]} ${year}`;
             
-            db.habitsDef.forEach(h => {
-                const isDone = doneToday.includes(h);
-                list.innerHTML += `
-                    <div onclick="toggleHabit('${h}')" class="card p-3 flex justify-between items-center transition active:scale-95 ${isDone ? 'border-green-600 bg-green-900/10' : ''}">
-                        <span class="${isDone ? 'text-green-400 font-bold' : 'text-gray-300'}">${h}</span>
-                        <div class="w-6 h-6 border rounded flex items-center justify-center ${isDone ? 'bg-green-600 border-green-600' : 'border-gray-500'}">
-                            ${isDone ? '✓' : ''}
-                        </div>
-                    </div>`;
-            });
-
-            // Habits Manager List
-            const manageList = document.getElementById('habits-manage-list');
-            manageList.innerHTML = db.habitsDef.map((h, i) => `
-                <div class="flex justify-between items-center bg-gray-900 p-2 rounded">
-                    <span class="text-xs">${h}</span>
-                    <button onclick="deleteHabitDef(${i})" class="text-red-500 font-bold px-2">x</button>
-                </div>
-            `).join('');
-        }
-
-        // --- 4. GYM LOGIC (LOGGING) ---
-        function loadLogSelectors() {
-            const rSel = document.getElementById('sel-routine');
-            rSel.innerHTML = '<option value="">Selecciona Rutina...</option>';
-            db.routines.forEach((r, i) => {
-                rSel.innerHTML += `<option value="${i}">${r.name}</option>`;
-            });
-        }
-
-        function loadExercisesForLog() {
-            const rIdx = document.getElementById('sel-routine').value;
-            const eSel = document.getElementById('sel-exercise');
-            eSel.innerHTML = '';
+            // Comprobar si es pasado, presente o futuro
+            const selectedDateObj = new Date(year, month, day);
+            selectedDateObj.setHours(0,0,0,0);
+            const todayObj = new Date(realToday.getFullYear(), realToday.getMonth(), realToday.getDate());
             
-            if(rIdx !== "") {
-                const exercises = db.routines[rIdx].exercises;
-                if(exercises.length === 0) {
-                    eSel.innerHTML = '<option value="">(Rutina vacía, edítala primero)</option>';
-                } else {
-                    exercises.forEach(ex => {
-                        eSel.innerHTML += `<option value="${ex}">${ex}</option>`;
-                    });
-                }
+            const statusText = document.getElementById('panel-status-display');
+            if (selectedDateObj.getTime() === todayObj.getTime()) {
+                statusText.innerText = "🔥 HOY";
+                statusText.className = "text-xs font-bold text-red-500";
+            } else if (selectedDateObj < todayObj) {
+                statusText.innerText = "⏳ Registro Pasado";
+                statusText.className = "text-xs font-bold text-gray-500";
             } else {
-                eSel.innerHTML = '<option value="">-- Elige rutina --</option>';
+                statusText.innerText = "🚀 Planificación Futura";
+                statusText.className = "text-xs font-bold text-blue-500";
             }
+
+            renderTasksForDay();
+
+            // Animación de abrir
+            document.getElementById('day-panel').classList.add('open');
+            const overlay = document.getElementById('overlay');
+            overlay.classList.remove('hidden');
+            setTimeout(() => overlay.classList.remove('opacity-0'), 10); // Trigger transition
         }
 
-        function saveSet() {
-            const rIdx = document.getElementById('sel-routine').value;
-            const ex = document.getElementById('sel-exercise').value;
-            const kg = document.getElementById('inp-kg').value;
-            const reps = document.getElementById('inp-reps').value;
-            const rpe = document.getElementById('inp-rpe').value;
-
-            if(rIdx === "" || !ex || !kg || !reps) { alert("Faltan datos"); return; }
-            
-            const routineName = db.routines[rIdx].name;
-
-            db.gymLogs.push({
-                date: todayStr,
-                timestamp: Date.now(),
-                routine: routineName,
-                ex: ex,
-                kg: kg,
-                reps: reps,
-                rpe: rpe
-            });
-
-            // Level Up logic
-            db.stats.xp += 10;
-            db.stats.fisico += 1;
-            checkLevelUp();
-            saveData();
-
-            // Clear inputs
-            document.getElementById('inp-kg').value = '';
-            document.getElementById('inp-reps').value = '';
-            renderTodayGym();
+        function closeDayPanel() {
+            document.getElementById('day-panel').classList.remove('open');
+            const overlay = document.getElementById('overlay');
+            overlay.classList.add('opacity-0');
+            setTimeout(() => overlay.classList.add('hidden'), 300); // Wait for transition
+            renderCalendar(); // Refrescar calendario por si añadimos tareas (para poner el puntito amarillo)
         }
 
-        function renderTodayGym() {
-            const list = document.getElementById('gym-today-list');
-            // Filter logs from today
-            const todayLogs = db.gymLogs.filter(l => l.date === todayStr).sort((a,b) => b.timestamp - a.timestamp);
-            
+        /* --- 4. GESTIÓN DE TAREAS/NOTAS --- */
+        function renderTasksForDay() {
+            const list = document.getElementById('day-tasks-list');
             list.innerHTML = '';
-            if(todayLogs.length === 0) list.innerHTML = '<div class="text-center text-xs text-gray-600 italic">Nada registrado hoy</div>';
+            
+            const tasks = dbTime[selectedDateStr] || [];
+            
+            if (tasks.length === 0) {
+                list.innerHTML = `<p class="text-center text-gray-600 text-sm mt-10 italic">No hay registros para este día.</p>`;
+                return;
+            }
 
-            todayLogs.forEach((l) => {
-                // Find index in main array to delete
-                const realIndex = db.gymLogs.indexOf(l);
+            tasks.forEach((t, idx) => {
                 list.innerHTML += `
-                    <div class="flex justify-between items-center border-b border-gray-800 py-3">
-                        <div>
-                            <div class="font-bold text-white text-sm">${l.ex}</div>
-                            <div class="text-[10px] text-gray-500">${l.routine}</div>
+                    <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 flex justify-between items-center">
+                        <span class="${t.done ? 'line-through text-gray-600' : 'text-white'} flex-1">${t.text}</span>
+                        <div class="flex gap-2 items-center">
+                            <button onclick="toggleTask(${idx})" class="w-8 h-8 rounded-full border border-gray-600 flex items-center justify-center ${t.done ? 'bg-green-600 border-green-600' : ''}">
+                                ${t.done ? '✓' : ''}
+                            </button>
+                            <button onclick="deleteTask(${idx})" class="btn-delete">🗑️</button>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <div class="text-blue-400 font-mono text-sm">${l.kg}kg <span class="text-gray-500">x</span> ${l.reps}</div>
-                            <button onclick="deleteLog(${realIndex})" class="bg-red-900/30 text-red-500 p-1 rounded hover:bg-red-900">🗑️</button>
-                        </div>
-                    </div>`;
+                    </div>
+                `;
             });
         }
 
-        function deleteLog(idx) {
-            if(confirm("¿Borrar esta serie?")) {
-                db.gymLogs.splice(idx, 1);
-                saveData();
-                renderTodayGym();
+        function addTaskToDay() {
+            const input = document.getElementById('new-task-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            // Si el día no existe en la base de datos, lo creamos
+            if (!dbTime[selectedDateStr]) {
+                dbTime[selectedDateStr] = [];
             }
-        }
 
-        // --- 5. GYM LOGIC (ROUTINE MANAGER) ---
-        function renderRoutinesManager() {
-            const container = document.getElementById('routines-list-container');
-            container.innerHTML = '';
-
-            db.routines.forEach((r, rIdx) => {
-                let exercisesHTML = '';
-                r.exercises.forEach((ex, exIdx) => {
-                    exercisesHTML += `
-                        <div class="flex justify-between items-center bg-black/20 p-2 rounded mb-1">
-                            <span class="text-xs text-gray-300">▪ ${ex}</span>
-                            <button onclick="deleteExerciseFromRoutine(${rIdx}, ${exIdx})" class="text-red-500 font-bold px-2">x</button>
-                        </div>`;
-                });
-
-                container.innerHTML += `
-                    <div class="card border-gray-700">
-                        <div class="flex justify-between items-center mb-3 border-b border-gray-700 pb-2">
-                            <h3 class="font-bold text-lg text-blue-400">${r.name}</h3>
-                            <button onclick="deleteRoutine(${rIdx})" class="text-xs text-red-500 border border-red-900 px-2 py-1 rounded">Eliminar Rutina</button>
-                        </div>
-                        
-                        <div class="mb-3 pl-2 border-l-2 border-gray-700">
-                            ${exercisesHTML}
-                            ${r.exercises.length === 0 ? '<div class="text-xs text-gray-600 italic">Sin ejercicios</div>' : ''}
-                        </div>
-
-                        <div class="flex gap-2 mt-2">
-                            <input type="text" id="new-ex-${rIdx}" placeholder="Añadir ejercicio (ej: Press Banca)" class="text-xs h-8">
-                            <button onclick="addExerciseToRoutine(${rIdx})" class="btn-blue w-auto h-8 px-3 flex items-center text-xs">Añadir</button>
-                        </div>
-                    </div>`;
-            });
-        }
-
-        function createRoutine() {
-            const name = document.getElementById('new-routine-name').value;
-            if(!name) return;
-            db.routines.push({ name: name, exercises: [] });
-            document.getElementById('new-routine-name').value = '';
-            saveData();
-            renderRoutinesManager();
-        }
-
-        function deleteRoutine(idx) {
-            if(confirm("¿Borrar la rutina completa?")) {
-                db.routines.splice(idx, 1);
-                saveData();
-                renderRoutinesManager();
-            }
-        }
-
-        function addExerciseToRoutine(rIdx) {
-            const input = document.getElementById(`new-ex-${rIdx}`);
-            const val = input.value;
-            if(!val) return;
-            db.routines[rIdx].exercises.push(val);
-            saveData();
-            renderRoutinesManager();
-        }
-
-        function deleteExerciseFromRoutine(rIdx, exIdx) {
-            db.routines[rIdx].exercises.splice(exIdx, 1);
-            saveData();
-            renderRoutinesManager();
-        }
-
-        // --- 6. GYM LOGIC (GRAPHS) ---
-        let chartInstance = null;
-
-        function loadGraphSelectors() {
-            // Get all unique exercises ever logged
-            const allExercises = [...new Set(db.gymLogs.map(l => l.ex))].sort();
-            const sel = document.getElementById('sel-graph-exercise');
-            sel.innerHTML = '<option value="">Selecciona ejercicio...</option>';
+            dbTime[selectedDateStr].push({ text: text, done: false });
+            input.value = '';
             
-            allExercises.forEach(ex => {
-                sel.innerHTML += `<option value="${ex}">${ex}</option>`;
-            });
+            saveData();
+            renderTasksForDay();
         }
 
-        function renderGraph() {
-            const exName = document.getElementById('sel-graph-exercise').value;
-            if(!exName) return;
+        function toggleTask(idx) {
+            dbTime[selectedDateStr][idx].done = !dbTime[selectedDateStr][idx].done;
+            saveData();
+            renderTasksForDay();
+        }
 
-            // Get data
-            const logs = db.gymLogs.filter(l => l.ex === exName).sort((a,b) => a.timestamp - b.timestamp);
-            
-            // Extract max weight per day
-            const dataMap = {};
-            logs.forEach(l => {
-                if(!dataMap[l.date] || parseFloat(l.kg) > parseFloat(dataMap[l.date])) {
-                    dataMap[l.date] = parseFloat(l.kg);
+        function deleteTask(idx) {
+            if (confirm("¿Borrar misión?")) {
+                dbTime[selectedDateStr].splice(idx, 1);
+                // Si borramos la última tarea, limpiamos el día de la base de datos para no acumular basura
+                if (dbTime[selectedDateStr].length === 0) {
+                    delete dbTime[selectedDateStr];
                 }
-            });
-
-            const labels = Object.keys(dataMap);
-            const values = Object.values(dataMap);
-
-            if(labels.length === 0) {
-                document.getElementById('graph-msg').innerText = "No hay datos suficientes para este ejercicio.";
-                return; 
-            }
-            document.getElementById('graph-msg').innerText = "";
-
-            // Render Chart
-            const ctx = document.getElementById('mainChart').getContext('2d');
-            if(chartInstance) chartInstance.destroy();
-
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: `${exName} (KG)`,
-                        data: values,
-                        borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: { beginAtZero: false, grid: { color: '#333' } },
-                        x: { grid: { display: false } }
-                    },
-                    plugins: { legend: { display: false } }
-                }
-            });
-        }
-
-        // --- 7. HABITS MANAGMENT ---
-        function toggleEditHabits() {
-            document.getElementById('habits-editor').classList.toggle('hidden');
-        }
-        function addHabitDef() {
-            const val = document.getElementById('new-habit-input').value;
-            if(!val) return;
-            db.habitsDef.push(val);
-            document.getElementById('new-habit-input').value = '';
-            saveData();
-        }
-        function deleteHabitDef(idx) {
-            db.habitsDef.splice(idx, 1);
-            saveData();
-        }
-        function toggleHabit(h) {
-            if(!db.habitsLog[todayStr]) db.habitsLog[todayStr] = [];
-            const idx = db.habitsLog[todayStr].indexOf(h);
-            
-            if(idx > -1) {
-                db.habitsLog[todayStr].splice(idx, 1); // uncheck
-            } else {
-                db.habitsLog[todayStr].push(h); // check
-                db.stats.xp += 5;
-                db.stats.mente += 1;
-                checkLevelUp();
-            }
-            saveData();
-        }
-
-        // --- SYSTEM ---
-        function checkLevelUp() {
-            if(db.stats.xp >= 100 * db.stats.lvl) {
-                db.stats.xp = 0;
-                db.stats.lvl++;
-                alert("¡SUBIDA DE NIVEL! 🎉");
+                saveData();
+                renderTasksForDay();
             }
         }
 
         function saveData() {
-            localStorage.setItem('josema_rpg_v2_1', JSON.stringify(db));
-            renderHome();
-        }
-        
-        function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(db));
-            const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", "josema_rpg_backup.json");
-            document.body.appendChild(dl); dl.click(); dl.remove();
-        }
-        
-        function hardReset() {
-            if(confirm("¿ESTÁS SEGURO? Se borrará TODO para siempre.")) {
-                localStorage.removeItem('josema_rpg_v2_1');
-                location.reload();
-            }
+            localStorage.setItem('josema_rpg_time', JSON.stringify(dbTime));
         }
 
-        // INIT
-        setGymMode('log'); // Default view
-        renderHome();
+        // INICIALIZAR
+        renderCalendar();
     </script>
 </body>
 </html>
