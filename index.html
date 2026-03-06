@@ -3,16 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Agenda</title>
+    <title>AgendaRPG</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;800;900&display=swap" rel="stylesheet">
+    
+    <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/96/bullseye.png">
     <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/96/bullseye.png">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Agenda RPG">
     
     <style>
         body { 
@@ -58,9 +61,8 @@
         
         .week-day-card { background: #1a1a1a; border-left: 4px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
         
-        /* Estilos Subtareas */
         .subtask-container { border-left: 2px solid #333; margin-left: 12px; padding-left: 12px; margin-top: 8px; }
-        .subtask-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 13px; color: #aaa; }
+        .subtask-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 13px; color: #aaa; }
     </style>
 </head>
 <body>
@@ -88,11 +90,11 @@
                 <option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option>
                 <option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="0">Domingo</option>
             </select>
-            <input type="text" id="rec-task" placeholder="Ej: Gym (Pecho y Espalda)" class="mb-2">
+            <input type="text" id="rec-task" placeholder="Tarea recurrente..." class="mb-2">
             <select id="rec-color" class="mb-2">
                 <option value="bg-purple-500">🏋️ Entrenamiento</option>
-                <option value="bg-blue-500">🔵 Tareas</option>
-                <option value="bg-green-500">💰 Bussines</option>
+                <option value="bg-blue-500">🔵 Normal</option>
+                <option value="bg-green-500">💰 Finanzas</option>
             </select>
             <button onclick="addRecurring()" class="btn-blue w-full">Añadir Fijo</button>
         </div>
@@ -117,7 +119,7 @@
         </div>
 
         <div class="flex gap-2 mb-2">
-            <input type="text" id="new-task-input" placeholder="Misión / Tarea...">
+            <input type="text" id="new-task-input" placeholder="Nueva tarea...">
         </div>
         <div class="flex gap-2 mb-6">
             <input type="time" id="new-task-time" class="w-24 text-center text-sm" placeholder="Hora">
@@ -168,25 +170,24 @@
         }
 
         /* --- MIGRACIÓN AUTOMÁTICA (ROLL-OVER) --- */
-        // Esto se ejecuta nada más abrir la app. Busca tareas no completadas del pasado y las trae a HOY.
         function runTaskRollover() {
             const todayStr = getStrDate(realToday);
             if (!dbTime[todayStr]) dbTime[todayStr] = [];
             let dataChanged = false;
 
             for (const dateKey in dbTime) {
-                if (dateKey < todayStr) { // Si la fecha es del pasado
+                if (dateKey < todayStr) {
                     let pendingTasks = dbTime[dateKey].filter(t => !t.done);
                     let completedTasks = dbTime[dateKey].filter(t => t.done);
 
                     if (pendingTasks.length > 0) {
                         pendingTasks.forEach(t => {
-                            t.isOverdue = true; // Etiqueta de "Atrasado"
-                            t.time = ""; // Quitamos la hora para que no se mezcle con el horario de hoy
+                            t.isOverdue = true; 
+                            t.time = ""; 
                             dbTime[todayStr].push(t);
                         });
                         
-                        dbTime[dateKey] = completedTasks; // Dejamos en el pasado solo lo completado
+                        dbTime[dateKey] = completedTasks; 
                         if (dbTime[dateKey].length === 0) delete dbTime[dateKey];
                         dataChanged = true;
                     }
@@ -194,8 +195,6 @@
             }
             if (dataChanged) localStorage.setItem('josema_rpg_time_v4', JSON.stringify(dbTime));
         }
-        
-        // Ejecutamos el Roll-Over al inicio
         runTaskRollover();
 
         /* --- NAVEGACIÓN --- */
@@ -263,7 +262,7 @@
         }
 
         /* --- VISTA 2: SEMANA --- */
-        function renderWeekView() { /* Igual que V1.3 */
+        function renderWeekView() {
             const list = document.getElementById('week-list');
             list.innerHTML = '';
             const order = [1, 2, 3, 4, 5, 6, 0];
@@ -323,34 +322,33 @@
                 });
             }
 
-            // Tareas (Ordenadas por Hora)
             let tasks = dbTime[dateStr] || [];
             if(tasks.length > 0) hasItems = true;
 
-            // Time-Blocking: Ordenar
             tasks.sort((a, b) => {
                 if (!a.time && !b.time) return 0;
-                if (!a.time) return -1; // Sin hora van primero
+                if (!a.time) return -1; 
                 if (!b.time) return 1;
                 return a.time.localeCompare(b.time);
             });
 
             tasks.forEach((t, idx) => {
-                // Generar HTML de Subtareas
                 let subHTML = '';
                 if(t.subtasks && t.subtasks.length > 0) {
                     subHTML = `<div class="subtask-container">`;
                     t.subtasks.forEach((sub, sIdx) => {
                         subHTML += `
                             <div class="subtask-item">
-                                <span class="${sub.done ? 'line-through text-gray-600' : 'text-gray-300'}">- ${sub.text}</span>
-                                <button onclick="toggleSubtask(${idx}, ${sIdx})" class="w-5 h-5 rounded border ${sub.done ? 'bg-gray-600 border-gray-600 text-black' : 'border-gray-500'} flex items-center justify-center text-[10px]">✓</button>
+                                <span class="${sub.done ? 'line-through text-gray-600' : 'text-gray-300'} flex-1">- ${sub.text}</span>
+                                <div class="flex gap-2">
+                                    <button onclick="toggleSubtask(${idx}, ${sIdx})" class="w-5 h-5 rounded border ${sub.done ? 'bg-gray-600 border-gray-600 text-black' : 'border-gray-500'} flex items-center justify-center text-[10px]">✓</button>
+                                    <button onclick="deleteSubtask(${idx}, ${sIdx})" class="text-red-500 font-bold text-xs px-1">X</button>
+                                </div>
                             </div>`;
                     });
                     subHTML += `</div>`;
                 }
 
-                // Etiquetas especiales (Hora / Atrasado)
                 let metaTags = '';
                 if(t.isOverdue) metaTags += `<span class="bg-red-900/50 text-red-400 text-[10px] px-2 py-0.5 rounded font-bold mr-2">🔴 ATRASADO</span>`;
                 if(t.time) metaTags += `<span class="bg-gray-800 text-blue-300 text-[10px] px-2 py-0.5 rounded font-bold font-mono border border-gray-700">🕒 ${t.time}</span>`;
@@ -392,8 +390,7 @@
             
             dbTime[dateStr].push({ text: text, color: color, time: timeInput.value, done: false, subtasks: [], isOverdue: false });
             
-            input.value = '';
-            timeInput.value = '';
+            input.value = ''; timeInput.value = '';
             localStorage.setItem('josema_rpg_time_v4', JSON.stringify(dbTime));
             renderDayView();
         }
@@ -413,9 +410,9 @@
             renderDayView();
         }
 
-        /* --- SUBTAREAS LÓGICA --- */
+        /* --- SUBTAREAS --- */
         function addSubtask(idx) {
-            const subText = prompt("Añade un paso a esta misión (Ej: Mirar hoteles):");
+            const subText = prompt("Añade un paso a esta misión:");
             if(!subText) return;
             const dateStr = getStrDate(selectedDayDate);
             if(!dbTime[dateStr][idx].subtasks) dbTime[dateStr][idx].subtasks = [];
@@ -431,10 +428,18 @@
             renderDayView();
         }
 
+        // NUEVA FUNCIÓN: Eliminar subtarea
+        function deleteSubtask(taskIdx, subIdx) {
+            if(confirm("¿Borrar este paso?")) {
+                const dateStr = getStrDate(selectedDayDate);
+                dbTime[dateStr][taskIdx].subtasks.splice(subIdx, 1);
+                localStorage.setItem('josema_rpg_time_v4', JSON.stringify(dbTime));
+                renderDayView();
+            }
+        }
+
         // INIT
         renderCalendar();
     </script>
 </body>
 </html>
-
-
