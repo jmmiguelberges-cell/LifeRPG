@@ -3,19 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>AgendaRPG</title>
+    <title>Life RPG - Agenda V1.5</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;800;900&display=swap" rel="stylesheet">
     
-    <link rel="icon" type="image/png" href="https://img.icons8.com/fluency/96/bullseye.png">
-    <link rel="apple-touch-icon" href="https://img.icons8.com/fluency/96/bullseye.png">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Agenda RPG">
     
     <style>
         body { 
@@ -90,11 +88,12 @@
                 <option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option>
                 <option value="4">Jueves</option><option value="5">Viernes</option><option value="6">Sábado</option><option value="0">Domingo</option>
             </select>
-            <input type="text" id="rec-task" placeholder="Tarea recurrente..." class="mb-2">
+            <input type="text" id="rec-task" placeholder="Nueva tarea fija..." class="mb-2">
             <select id="rec-color" class="mb-2">
-                <option value="bg-purple-500">🏋️ Entrenamiento</option>
-                <option value="bg-blue-500">🔵 Normal</option>
-                <option value="bg-green-500">💰 Finanzas</option>
+                <option value="bg-purple-500">🏋️ Entrenamiento (Morado)</option>
+                <option value="bg-yellow-500">📚 Estudio (Amarillo)</option>
+                <option value="bg-blue-500">🔵 Normal (Azul)</option>
+                <option value="bg-green-500">💰 Finanzas (Verde)</option>
             </select>
             <button onclick="addRecurring()" class="btn-blue w-full">Añadir Fijo</button>
         </div>
@@ -119,13 +118,14 @@
         </div>
 
         <div class="flex gap-2 mb-2">
-            <input type="text" id="new-task-input" placeholder="Nueva tarea...">
+            <input type="text" id="new-task-input" placeholder="Añadir misión/tarea...">
         </div>
         <div class="flex gap-2 mb-6">
-            <input type="time" id="new-task-time" class="w-24 text-center text-sm" placeholder="Hora">
+            <input type="time" id="new-task-time" class="w-24 text-center text-sm">
             <select id="new-task-color" class="flex-1 text-sm">
                 <option value="bg-blue-500">🔵 Normal</option>
                 <option value="bg-red-500">🔴 Urgente</option>
+                <option value="bg-yellow-500">📚 Estudio</option>
                 <option value="bg-purple-500">🏋️ Físico</option>
                 <option value="bg-green-500">💰 Dinero</option>
             </select>
@@ -176,7 +176,7 @@
             let dataChanged = false;
 
             for (const dateKey in dbTime) {
-                if (dateKey < todayStr) {
+                if (dateKey < todayStr) { 
                     let pendingTasks = dbTime[dateKey].filter(t => !t.done);
                     let completedTasks = dbTime[dateKey].filter(t => t.done);
 
@@ -187,7 +187,7 @@
                             dbTime[todayStr].push(t);
                         });
                         
-                        dbTime[dateKey] = completedTasks; 
+                        dbTime[dateKey] = completedTasks;
                         if (dbTime[dateKey].length === 0) delete dbTime[dateKey];
                         dataChanged = true;
                     }
@@ -216,8 +216,10 @@
             if(dbTime[dateStr]) dbTime[dateStr].forEach(t => { if(!t.done) colorsPresent.push(t.color); });
 
             if(colorsPresent.length === 0) return null;
+            // Nueva prioridad: Rojo > Morado > Amarillo > Verde > Azul
             if(colorsPresent.includes('bg-red-500')) return 'bg-red-500';
             if(colorsPresent.includes('bg-purple-500')) return 'bg-purple-500';
+            if(colorsPresent.includes('bg-yellow-500')) return 'bg-yellow-500';
             if(colorsPresent.includes('bg-green-500')) return 'bg-green-500';
             return 'bg-blue-500';
         }
@@ -262,7 +264,7 @@
         }
 
         /* --- VISTA 2: SEMANA --- */
-        function renderWeekView() {
+        function renderWeekView() { 
             const list = document.getElementById('week-list');
             list.innerHTML = '';
             const order = [1, 2, 3, 4, 5, 6, 0];
@@ -281,7 +283,7 @@
         }
         function addRecurring() {
             const day = document.getElementById('rec-day').value;
-            const text = document.getElementById('rec-task').value;
+            const text = document.getElementById('rec-task').value.trim();
             const color = document.getElementById('rec-color').value;
             if(!text) return;
             dbRecurring[day].push({ text, color });
@@ -297,7 +299,6 @@
             
             document.getElementById('day-display').innerText = `${dayNames[dayOfWeek]}, ${selectedDayDate.getDate()} ${monthNames[selectedDayDate.getMonth()]}`;
             
-            // Turno
             if(dayOfWeek >= 1 && dayOfWeek <= 5) {
                 document.getElementById('day-shift-display').innerText = "TT (Prueba)";
                 document.getElementById('day-shift-display').className = "text-sm font-bold text-yellow-500";
@@ -310,7 +311,6 @@
             list.innerHTML = '';
             let hasItems = false;
 
-            // Recurrentes
             if(dbRecurring[dayOfWeek] && dbRecurring[dayOfWeek].length > 0) {
                 hasItems = true;
                 dbRecurring[dayOfWeek].forEach(t => {
@@ -341,8 +341,8 @@
                             <div class="subtask-item">
                                 <span class="${sub.done ? 'line-through text-gray-600' : 'text-gray-300'} flex-1">- ${sub.text}</span>
                                 <div class="flex gap-2">
-                                    <button onclick="toggleSubtask(${idx}, ${sIdx})" class="w-5 h-5 rounded border ${sub.done ? 'bg-gray-600 border-gray-600 text-black' : 'border-gray-500'} flex items-center justify-center text-[10px]">✓</button>
-                                    <button onclick="deleteSubtask(${idx}, ${sIdx})" class="text-red-500 font-bold text-xs px-1">X</button>
+                                    <button onclick="toggleSubtask(${idx}, ${sIdx})" class="w-6 h-6 rounded border ${sub.done ? 'bg-gray-600 border-gray-600 text-black' : 'border-gray-500'} flex items-center justify-center text-[10px]">✓</button>
+                                    <button onclick="deleteSubtask(${idx}, ${sIdx})" class="w-6 h-6 text-red-500 bg-red-900/20 rounded font-bold text-[10px] flex items-center justify-center">X</button>
                                 </div>
                             </div>`;
                     });
@@ -390,7 +390,8 @@
             
             dbTime[dateStr].push({ text: text, color: color, time: timeInput.value, done: false, subtasks: [], isOverdue: false });
             
-            input.value = ''; timeInput.value = '';
+            input.value = '';
+            timeInput.value = '';
             localStorage.setItem('josema_rpg_time_v4', JSON.stringify(dbTime));
             renderDayView();
         }
@@ -428,14 +429,12 @@
             renderDayView();
         }
 
-        // NUEVA FUNCIÓN: Eliminar subtarea
+        // NUEVA FUNCIÓN: Borrar subtarea
         function deleteSubtask(taskIdx, subIdx) {
-            if(confirm("¿Borrar este paso?")) {
-                const dateStr = getStrDate(selectedDayDate);
-                dbTime[dateStr][taskIdx].subtasks.splice(subIdx, 1);
-                localStorage.setItem('josema_rpg_time_v4', JSON.stringify(dbTime));
-                renderDayView();
-            }
+            const dateStr = getStrDate(selectedDayDate);
+            dbTime[dateStr][taskIdx].subtasks.splice(subIdx, 1);
+            localStorage.setItem('josema_rpg_time_v4', JSON.stringify(dbTime));
+            renderDayView();
         }
 
         // INIT
