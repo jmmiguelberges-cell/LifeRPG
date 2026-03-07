@@ -6,12 +6,10 @@
     <title>Life RPG - Agenda PRO</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;800;900&display=swap" rel="stylesheet">
     
     <link rel="apple-touch-icon" href="https://jmmiguelberges-cell.github.io/LifeRPG/icono.jpg">
-    <link rel="icon" type="image/png" href="https://jmmiguelberges-cell.github.io/LifeRPG/icono.jpg">
+    <link rel="icon" type="image/jpeg" href="https://jmmiguelberges-cell.github.io/LifeRPG/icono.jpg">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -23,6 +21,11 @@
         }
         
         h1, h2, h3 { font-weight: 800; letter-spacing: -0.5px; }
+
+        /* Pestañas Superiores Internas */
+        .sub-nav { display: flex; gap: 8px; margin-bottom: 8px; background: #1a1a1a; padding: 4px; border-radius: 12px; margin-left: 16px; margin-right: 16px; }
+        .sub-nav-btn { flex: 1; text-align: center; padding: 10px; font-size: 13px; border-radius: 8px; color: #666; font-weight: 800; transition: 0.2s; }
+        .sub-nav-btn.active { background: #333; color: white; }
 
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 0 16px; }
         .day-cell { 
@@ -49,6 +52,7 @@
         .btn-blue { background: #2563eb; color: white; font-weight: 800; padding: 12px 20px; border-radius: 10px; }
         .btn-icon { background: #1f2937; color: white; padding: 8px 16px; border-radius: 8px; font-weight: bold; }
 
+        /* NAVEGACIÓN GLOBAL INFERIOR */
         .nav-bar { 
             position: fixed; bottom: 0; width: 100%; background: rgba(15, 15, 15, 0.95); 
             border-top: 1px solid #333; padding: 10px 0 25px 0; 
@@ -59,7 +63,6 @@
         .nav-item svg { width: 24px; height: 24px; margin: 0 auto 4px; display: block; }
         
         .week-day-card { background: #1a1a1a; border-left: 4px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
-        
         .subtask-container { border-left: 2px solid #333; margin-left: 12px; padding-left: 12px; margin-top: 8px; }
         .subtask-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 13px; color: #aaa; }
     </style>
@@ -68,6 +71,12 @@
 
     <div class="px-5 pt-12 pb-4 border-b border-gray-800 mb-2">
         <h1 class="text-3xl text-white tracking-tight">Agenda<span class="text-blue-500">PRO</span></h1>
+    </div>
+
+    <div class="sub-nav">
+        <button onclick="switchView('month', this)" class="sub-nav-btn active">📅 Mes</button>
+        <button onclick="switchView('week', this)" class="sub-nav-btn">🔄 Semana</button>
+        <button onclick="switchView('day', this)" class="sub-nav-btn">📝 Día</button>
     </div>
 
     <div id="view-month" class="view-section active">
@@ -83,7 +92,6 @@
     </div>
 
     <div id="view-week" class="view-section px-4 pt-2">
-        <h2 class="text-xl text-blue-400 mb-4">Planificación Semanal</h2>
         <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 mb-6">
             <select id="rec-day" class="mb-2">
                 <option value="1">Lunes</option><option value="2">Martes</option><option value="3">Miércoles</option>
@@ -139,26 +147,28 @@
     </div>
 
     <nav class="nav-bar">
-        <div class="nav-item active" onclick="switchView('month', this)">
+        <div class="nav-item active">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-            MES
+            AGENDA
         </div>
-        <div class="nav-item" onclick="switchView('week', this)">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-            SEMANA
+        <div class="nav-item" onclick="alert('Módulo Físico en construcción 🚧')">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            FÍSICO
         </div>
-        <div class="nav-item" onclick="switchView('day', this)">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
-            DÍA
+        <div class="nav-item" onclick="window.location.href='cocina.html'">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            COCINA
+        </div>
+        <div class="nav-item" onclick="alert('Módulo Finanzas en construcción 🚧')">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            FINANZAS
         </div>
     </nav>
 
     <script>
         /* --- DB & INITS --- */
         let dbTime = JSON.parse(localStorage.getItem('josema_rpg_time_v4')) || {};
-        let dbRecurring = JSON.parse(localStorage.getItem('josema_rpg_rec_v4')) || {
-            0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[]
-        };
+        let dbRecurring = JSON.parse(localStorage.getItem('josema_rpg_rec_v4')) || { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[] };
 
         const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
         const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -167,9 +177,7 @@
         let selectedDayDate = new Date(); 
         const realToday = new Date();
 
-        function getStrDate(dateObj) {
-            return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
-        }
+        function getStrDate(dateObj) { return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`; }
 
         /* --- MIGRACIÓN AUTOMÁTICA (ROLL-OVER) --- */
         function runTaskRollover() {
@@ -181,14 +189,8 @@
                 if (dateKey < todayStr) { 
                     let pendingTasks = dbTime[dateKey].filter(t => !t.done);
                     let completedTasks = dbTime[dateKey].filter(t => t.done);
-
                     if (pendingTasks.length > 0) {
-                        pendingTasks.forEach(t => {
-                            t.isOverdue = true; 
-                            t.time = ""; 
-                            dbTime[todayStr].push(t);
-                        });
-                        
+                        pendingTasks.forEach(t => { t.isOverdue = true; t.time = ""; dbTime[todayStr].push(t); });
                         dbTime[dateKey] = completedTasks;
                         if (dbTime[dateKey].length === 0) delete dbTime[dateKey];
                         dataChanged = true;
@@ -199,10 +201,10 @@
         }
         runTaskRollover();
 
-        /* --- NAVEGACIÓN --- */
+        /* --- NAVEGACIÓN INTERNA DE PESTAÑAS (ARRIBA) --- */
         function switchView(viewName, el) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelectorAll('.sub-nav-btn').forEach(n => n.classList.remove('active'));
             document.getElementById(`view-${viewName}`).classList.add('active');
             if(el) el.classList.add('active');
             
@@ -259,8 +261,8 @@
         function changeMonth(step) { viewMonthDate.setMonth(viewMonthDate.getMonth() + step); renderCalendar(); }
         function selectDayFromCalendar(y, m, d) {
             selectedDayDate = new Date(y, m, d, 12, 0, 0);
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.querySelectorAll('.nav-item')[2].classList.add('active'); 
+            document.querySelectorAll('.sub-nav-btn').forEach(n => n.classList.remove('active'));
+            document.querySelectorAll('.sub-nav-btn')[2].classList.add('active'); 
             switchView('day');
         }
 
@@ -444,5 +446,3 @@
     </script>
 </body>
 </html>
-
-
