@@ -9,7 +9,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;800;900&display=swap" rel="stylesheet">
     
-    <link rel="apple-touch-icon" href="icono.jpg?v=3">
+    <link rel="apple-touch-icon" href="https://jmmiguelberges-cell.github.io/LifeRPG/icono.jpg">
+    <link rel="icon" type="image/jpeg" href="https://jmmiguelberges-cell.github.io/LifeRPG/icono.jpg">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
@@ -30,12 +31,13 @@
         
         .card-base { background: #1a1a1a; border-radius: 16px; border: 1px solid #2a2a2a; padding: 16px; margin-bottom: 12px; }
 
+        /* NAVEGACIÓN INFERIOR GLOBAL */
         .nav-bar { 
             position: fixed; bottom: 0; width: 100%; background: rgba(15, 15, 15, 0.95); 
             border-top: 1px solid #333; padding: 10px 0 25px 0; 
             display: flex; justify-content: space-around; backdrop-filter: blur(10px); z-index: 50; 
         }
-        .nav-item { color: #555; text-align: center; font-size: 11px; font-weight: 800; flex: 1; transition: 0.2s; }
+        .nav-item { color: #555; text-align: center; font-size: 11px; font-weight: 800; flex: 1; transition: 0.2s; cursor: pointer; }
         .nav-item.active { color: #3b82f6; }
         .nav-item svg { width: 24px; height: 24px; margin: 0 auto 4px; display: block; }
         
@@ -141,7 +143,7 @@
         <div id="sub-metas" class="hidden">
             <div class="card-base text-center py-6">
                 <h3 class="text-xl text-white mb-1">Tus Objetivos</h3>
-                <p class="text-xs text-gray-400 mb-6">Ajusta tus macros según tu fase actual (Volumen, Definición, Mantenimiento).</p>
+                <p class="text-xs text-gray-400 mb-6">Ajusta tus macros según tu fase actual.</p>
                 
                 <div class="space-y-4 text-left">
                     <div>
@@ -170,11 +172,11 @@
     </div>
 
     <nav class="nav-bar">
-        <div class="nav-item">
+        <div class="nav-item" onclick="window.location.href='index.html'">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
             AGENDA
         </div>
-        <div class="nav-item">
+        <div class="nav-item" onclick="alert('Módulo Físico en construcción 🚧')">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
             FÍSICO
         </div>
@@ -182,7 +184,7 @@
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             COCINA
         </div>
-        <div class="nav-item">
+        <div class="nav-item" onclick="alert('Módulo Finanzas en construcción 🚧')">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             FINANZAS
         </div>
@@ -190,14 +192,13 @@
 
     <script>
         /* --- 1. BASE DE DATOS LOCAL --- */
-        let dbNutri = JSON.parse(localStorage.getItem('josema_rpg_nutri_log')) || {}; // {"YYYY-MM-DD": [{name, p, c, f, kcal, time}]}
-        let dbRecipes = JSON.parse(localStorage.getItem('josema_rpg_nutri_recipes')) || []; // [{name, p, c, f, kcal}]
+        let dbNutri = JSON.parse(localStorage.getItem('josema_rpg_nutri_log')) || {}; 
+        let dbRecipes = JSON.parse(localStorage.getItem('josema_rpg_nutri_recipes')) || []; 
         let dbGoals = JSON.parse(localStorage.getItem('josema_rpg_nutri_goals')) || { kcal: 2500, p: 150, c: 250, f: 80 };
 
         const realToday = new Date();
         const todayStr = `${realToday.getFullYear()}-${String(realToday.getMonth() + 1).padStart(2, '0')}-${String(realToday.getDate()).padStart(2, '0')}`;
         
-        // Mostrar Fecha en Cabecera
         const options = { weekday: 'long', day: 'numeric', month: 'short' };
         document.getElementById('today-date').innerText = realToday.toLocaleDateString('es-ES', options);
 
@@ -227,7 +228,6 @@
         function renderDiario() {
             const todayLog = dbNutri[todayStr] || [];
             
-            // 1. Calcular Totales
             let totalP = 0, totalC = 0, totalF = 0, totalKcal = 0;
             todayLog.forEach(food => {
                 totalP += parseFloat(food.p) || 0;
@@ -236,12 +236,10 @@
                 totalKcal += parseFloat(food.kcal) || 0;
             });
 
-            // Auto-calcular Kcal si no se han introducido a mano (P*4 + C*4 + F*9)
             if(totalKcal === 0 && (totalP > 0 || totalC > 0 || totalF > 0)) {
                 totalKcal = (totalP * 4) + (totalC * 4) + (totalF * 9);
             }
 
-            // 2. Actualizar Textos y Barras
             document.getElementById('lbl-p').innerText = Math.round(totalP);
             document.getElementById('lbl-c').innerText = Math.round(totalC);
             document.getElementById('lbl-f').innerText = Math.round(totalF);
@@ -250,7 +248,6 @@
             document.getElementById('goal-c').innerText = dbGoals.c;
             document.getElementById('goal-f').innerText = dbGoals.f;
 
-            // Porcentajes para las barras (con límite al 100%)
             const pctP = Math.min((totalP / dbGoals.p) * 100, 100);
             const pctC = Math.min((totalC / dbGoals.c) * 100, 100);
             const pctF = Math.min((totalF / dbGoals.f) * 100, 100);
@@ -259,11 +256,9 @@
             document.getElementById('bar-c').style.width = `${pctC}%`;
             document.getElementById('bar-f').style.width = `${pctF}%`;
 
-            // 3. Renderizar Gráfica de Anillo (Chart.js)
             document.getElementById('chart-kcal-current').innerText = Math.round(totalKcal);
             const remainingKcal = Math.max(dbGoals.kcal - totalKcal, 0);
             
-            // Color cambia a rojo si te pasas
             const ringColor = totalKcal > dbGoals.kcal ? '#ef4444' : '#22c55e';
 
             if(kcalChartInstance) kcalChartInstance.destroy();
@@ -286,7 +281,6 @@
                 }
             });
 
-            // 4. Pintar Lista de Alimentos
             const list = document.getElementById('today-food-list');
             list.innerHTML = '';
             if(todayLog.length === 0) {
@@ -294,9 +288,8 @@
                 return;
             }
 
-            // Invertimos para que lo último comido salga arriba
             [...todayLog].reverse().forEach((food, reverseIdx) => {
-                const realIdx = todayLog.length - 1 - reverseIdx; // Índice real para borrar
+                const realIdx = todayLog.length - 1 - reverseIdx; 
                 let calcKcal = food.kcal || ((food.p*4) + (food.c*4) + (food.f*9));
                 
                 list.innerHTML += `
@@ -335,7 +328,6 @@
             
             localStorage.setItem('josema_rpg_nutri_log', JSON.stringify(dbNutri));
             
-            // Limpiar inputs
             document.getElementById('food-name').value = '';
             document.getElementById('food-p').value = '';
             document.getElementById('food-c').value = '';
@@ -410,7 +402,6 @@
             });
             localStorage.setItem('josema_rpg_nutri_log', JSON.stringify(dbNutri));
             
-            // Volver al diario automáticamente para ver el progreso
             switchSubTab('diario', document.querySelectorAll('.sub-nav-btn')[0]);
         }
 
@@ -439,7 +430,6 @@
             localStorage.setItem('josema_rpg_nutri_goals', JSON.stringify(dbGoals));
             alert("Metas actualizadas correctamente. 🔥");
             
-            // Refrescar el diario para que las barras se ajusten
             renderDiario();
         }
 
