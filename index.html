@@ -3,9 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Life RPG - Agenda V1.6</title>
+    <title>Life RPG - Agenda PRO</title>
     
-    <link rel="apple-touch-icon" href="logo.png?v=1">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;800;900&display=swap" rel="stylesheet">
+    
+    <link rel="apple-touch-icon" href="icono.png?v=3">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,8 +26,7 @@
         .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 0 16px; }
         .day-cell { 
             min-height: 65px; background: #1a1a1a; border-radius: 8px; border: 1px solid #2a2a2a;
-            display: flex; flex-direction: column
-            ; align-items: center; justify-content: flex-start; 
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
             padding-top: 4px; font-size: 15px; font-weight: 800; position: relative;
         }
         .day-cell:active { transform: scale(0.95); background: #252525; }
@@ -38,7 +42,7 @@
         .view-section.active { display: block; animation: fadeIn 0.2s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        input, select { background: #252525; border: 1px solid #333; color: white; border-radius: 10px; padding: 14px; width: 100%; font-size: 15px; font-weight: 600;}
+        input, select { background: #252525; border: 1px solid #333; color: white; border-radius: 10px; padding: 14px; width: 100%; font-size: 15px; font-weight: 600; }
         input[type="time"] { padding: 12px; }
         input:focus, select:focus { outline: none; border-color: #3b82f6; }
         .btn-blue { background: #2563eb; color: white; font-weight: 800; padding: 12px 20px; border-radius: 10px; }
@@ -56,6 +60,7 @@
         .week-day-card { background: #1a1a1a; border-left: 4px solid #333; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
         
         .subtask-container { border-left: 2px solid #333; margin-left: 12px; padding-left: 12px; margin-top: 8px; }
+        .subtask-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 13px; color: #aaa; }
     </style>
 </head>
 <body>
@@ -276,6 +281,7 @@
                 if(tasks.length > 0) list.innerHTML += `<div class="week-day-card border-${tasks[0].color.split('-')[1]}-500"><h3 class="font-bold text-gray-400 uppercase tracking-widest text-[10px]">${dayNames[dayNum]}</h3>${htmlTasks}</div>`;
             });
         }
+
         function addRecurring() {
             const day = document.getElementById('rec-day').value;
             const text = document.getElementById('rec-task').value.trim();
@@ -285,6 +291,7 @@
             localStorage.setItem('josema_rpg_rec_v4', JSON.stringify(dbRecurring));
             document.getElementById('rec-task').value = ''; renderWeekView();
         }
+
         function deleteRecurring(dayNum, idx) { dbRecurring[dayNum].splice(idx, 1); localStorage.setItem('josema_rpg_rec_v4', JSON.stringify(dbRecurring)); renderWeekView(); }
 
         /* --- VISTA 3: DÍA --- */
@@ -333,9 +340,9 @@
                     subHTML = `<div class="subtask-container">`;
                     t.subtasks.forEach((sub, sIdx) => {
                         subHTML += `
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="${sub.done ? 'line-through text-gray-600' : 'text-gray-300'} text-[13px] flex-1">- ${sub.text}</span>
-                                <div class="flex gap-2 ml-2">
+                            <div class="subtask-item">
+                                <span class="${sub.done ? 'line-through text-gray-600' : 'text-gray-300'} flex-1">- ${sub.text}</span>
+                                <div class="flex gap-2">
                                     <button onclick="toggleSubtask(${idx}, ${sIdx})" class="w-6 h-6 rounded border ${sub.done ? 'bg-gray-600 border-gray-600 text-black' : 'border-gray-500'} flex items-center justify-center text-[10px]">✓</button>
                                     <button onclick="deleteSubtask(${idx}, ${sIdx})" class="w-6 h-6 text-red-500 bg-red-900/20 rounded font-bold text-[10px] flex items-center justify-center">X</button>
                                 </div>
@@ -436,5 +443,3 @@
     </script>
 </body>
 </html>
-
-
