@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Life RPG - Nutrición</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;800;900&display=swap" rel="stylesheet">
+    
+    <link rel="apple-touch-icon" href="icono.jpg?v=3">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <style>
+        body { 
+            background-color: #0f0f0f; color: #e0e0e0; font-family: 'Raleway', sans-serif; 
+            -webkit-user-select: none; overflow: hidden; height: 100vh; display: flex; flex-direction: column; 
+        }
+        h1, h2, h3 { font-weight: 800; letter-spacing: -0.5px; }
+
+        .view-section { display: none; flex: 1; overflow-y: auto; padding-bottom: 90px; }
+        .view-section.active { display: block; animation: fadeIn 0.2s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        input, select { background: #252525; border: 1px solid #333; color: white; border-radius: 10px; padding: 12px; width: 100%; font-size: 14px; font-weight: 600; }
+        input:focus, select:focus { outline: none; border-color: #3b82f6; }
+        .btn-blue { background: #2563eb; color: white; font-weight: 800; padding: 12px 20px; border-radius: 10px; }
+        
+        .card-base { background: #1a1a1a; border-radius: 16px; border: 1px solid #2a2a2a; padding: 16px; margin-bottom: 12px; }
+
+        .nav-bar { 
+            position: fixed; bottom: 0; width: 100%; background: rgba(15, 15, 15, 0.95); 
+            border-top: 1px solid #333; padding: 10px 0 25px 0; 
+            display: flex; justify-content: space-around; backdrop-filter: blur(10px); z-index: 50; 
+        }
+        .nav-item { color: #555; text-align: center; font-size: 11px; font-weight: 800; flex: 1; transition: 0.2s; }
+        .nav-item.active { color: #3b82f6; }
+        .nav-item svg { width: 24px; height: 24px; margin: 0 auto 4px; display: block; }
+        
+        /* Sub-pestañas Internas */
+        .sub-nav { display: flex; gap: 8px; margin-bottom: 16px; background: #1a1a1a; padding: 4px; border-radius: 12px; }
+        .sub-nav-btn { flex: 1; text-align: center; padding: 10px; font-size: 13px; border-radius: 8px; color: #666; font-weight: 800; transition: 0.2s; }
+        .sub-nav-btn.active { background: #333; color: white; }
+
+        /* Barras de Progreso Macros */
+        .progress-bg { background: #2a2a2a; border-radius: 99px; height: 8px; width: 100%; overflow: hidden; margin-top: 4px; }
+        .progress-fill { height: 100%; border-radius: 99px; transition: width 0.3s ease; }
+    </style>
+</head>
+<body>
+
+    <div class="px-5 pt-12 pb-4 border-b border-gray-800 mb-2 flex justify-between items-end">
+        <h1 class="text-3xl text-white tracking-tight">Nutri<span class="text-green-500">PRO</span></h1>
+        <div class="text-xs text-gray-500 font-bold tracking-widest uppercase" id="today-date">Cargando...</div>
+    </div>
+
+    <div id="view-main" class="view-section active px-4 pt-2">
+        
+        <div class="sub-nav">
+            <button onclick="switchSubTab('diario', this)" class="sub-nav-btn active">🍽️ Diario</button>
+            <button onclick="switchSubTab('recetario', this)" class="sub-nav-btn">📖 Recetario</button>
+            <button onclick="switchSubTab('metas', this)" class="sub-nav-btn">🎯 Metas</button>
+        </div>
+
+        <div id="sub-diario" class="block">
+            
+            <div class="card-base flex items-center gap-4">
+                <div class="w-1/3 relative">
+                    <canvas id="kcalChart"></canvas>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span id="chart-kcal-current" class="text-xl font-black text-white leading-none">0</span>
+                        <span class="text-[9px] text-gray-500 uppercase font-bold">Kcal</span>
+                    </div>
+                </div>
+                <div class="w-2/3 space-y-3">
+                    <div>
+                        <div class="flex justify-between text-xs font-bold"><span class="text-blue-400">Proteína</span><span class="text-gray-400"><span id="lbl-p">0</span> / <span id="goal-p">150</span>g</span></div>
+                        <div class="progress-bg"><div id="bar-p" class="progress-fill bg-blue-500" style="width: 0%;"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs font-bold"><span class="text-yellow-400">Carbos</span><span class="text-gray-400"><span id="lbl-c">0</span> / <span id="goal-c">200</span>g</span></div>
+                        <div class="progress-bg"><div id="bar-c" class="progress-fill bg-yellow-500" style="width: 0%;"></div></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs font-bold"><span class="text-red-400">Grasas</span><span class="text-gray-400"><span id="lbl-f">0</span> / <span id="goal-f">70</span>g</span></div>
+                        <div class="progress-bg"><div id="bar-f" class="progress-fill bg-red-500" style="width: 0%;"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-base border-dashed border-gray-600 bg-gray-900/50">
+                <div class="flex gap-2 mb-2">
+                    <input type="text" id="food-name" placeholder="¿Qué has comido? (Ej: Pechuga Pollo 200g)">
+                </div>
+                <div class="grid grid-cols-4 gap-2 mb-2">
+                    <div>
+                        <label class="text-[9px] text-blue-400 uppercase font-bold ml-1">Prot</label>
+                        <input type="number" id="food-p" placeholder="0" class="text-center p-2">
+                    </div>
+                    <div>
+                        <label class="text-[9px] text-yellow-400 uppercase font-bold ml-1">Carb</label>
+                        <input type="number" id="food-c" placeholder="0" class="text-center p-2">
+                    </div>
+                    <div>
+                        <label class="text-[9px] text-red-400 uppercase font-bold ml-1">Grasa</label>
+                        <input type="number" id="food-f" placeholder="0" class="text-center p-2">
+                    </div>
+                    <div>
+                        <label class="text-[9px] text-white uppercase font-bold ml-1">Kcal</label>
+                        <input type="number" id="food-kcal" placeholder="0" class="text-center p-2 bg-gray-800">
+                    </div>
+                </div>
+                <button onclick="logFood()" class="btn-blue w-full bg-green-600">+ Añadir al Diario</button>
+            </div>
+
+            <h3 class="text-xs text-gray-500 uppercase tracking-widest mb-2 border-b border-gray-800 pb-1 mt-6">Comidas de Hoy</h3>
+            <div id="today-food-list" class="space-y-2"></div>
+
+        </div>
+
+        <div id="sub-recetario" class="hidden">
+            <p class="text-xs text-gray-400 mb-4">Guarda tus comidas frecuentes aquí para añadirlas a tu diario con 1 solo clic. Cero excusas.</p>
+            
+            <div class="card-base bg-gray-800 border-gray-700">
+                <h4 class="text-sm font-bold text-white mb-2">+ Nueva Receta Frecuente</h4>
+                <input type="text" id="rec-name" placeholder="Ej: Batido Post-Entreno" class="mb-2">
+                <div class="grid grid-cols-4 gap-2 mb-2">
+                    <input type="number" id="rec-p" placeholder="P" class="text-center p-2">
+                    <input type="number" id="rec-c" placeholder="C" class="text-center p-2">
+                    <input type="number" id="rec-f" placeholder="G" class="text-center p-2">
+                    <input type="number" id="rec-k" placeholder="Kcal" class="text-center p-2">
+                </div>
+                <button onclick="saveRecipe()" class="btn-blue w-full">Guardar Receta</button>
+            </div>
+
+            <div id="recipes-list" class="grid grid-cols-1 gap-2 mt-4"></div>
+        </div>
+
+        <div id="sub-metas" class="hidden">
+            <div class="card-base text-center py-6">
+                <h3 class="text-xl text-white mb-1">Tus Objetivos</h3>
+                <p class="text-xs text-gray-400 mb-6">Ajusta tus macros según tu fase actual (Volumen, Definición, Mantenimiento).</p>
+                
+                <div class="space-y-4 text-left">
+                    <div>
+                        <label class="text-xs text-white uppercase font-bold">🔥 Calorías Totales</label>
+                        <input type="number" id="goal-input-kcal" class="text-xl font-black text-center text-white bg-gray-900 border-gray-700">
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="text-[10px] text-blue-400 uppercase font-bold">Proteínas (g)</label>
+                            <input type="number" id="goal-input-p" class="text-center">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-yellow-400 uppercase font-bold">Carbohidratos (g)</label>
+                            <input type="number" id="goal-input-c" class="text-center">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-red-400 uppercase font-bold">Grasas (g)</label>
+                            <input type="number" id="goal-input-f" class="text-center">
+                        </div>
+                    </div>
+                </div>
+                <button onclick="saveGoals()" class="btn-blue w-full mt-6 bg-purple-600">Actualizar Metas</button>
+            </div>
+        </div>
+
+    </div>
+
+    <nav class="nav-bar">
+        <div class="nav-item">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            AGENDA
+        </div>
+        <div class="nav-item">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+            FÍSICO
+        </div>
+        <div class="nav-item active">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            COCINA
+        </div>
+        <div class="nav-item">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            FINANZAS
+        </div>
+    </nav>
+
+    <script>
+        /* --- 1. BASE DE DATOS LOCAL --- */
+        let dbNutri = JSON.parse(localStorage.getItem('josema_rpg_nutri_log')) || {}; // {"YYYY-MM-DD": [{name, p, c, f, kcal, time}]}
+        let dbRecipes = JSON.parse(localStorage.getItem('josema_rpg_nutri_recipes')) || []; // [{name, p, c, f, kcal}]
+        let dbGoals = JSON.parse(localStorage.getItem('josema_rpg_nutri_goals')) || { kcal: 2500, p: 150, c: 250, f: 80 };
+
+        const realToday = new Date();
+        const todayStr = `${realToday.getFullYear()}-${String(realToday.getMonth() + 1).padStart(2, '0')}-${String(realToday.getDate()).padStart(2, '0')}`;
+        
+        // Mostrar Fecha en Cabecera
+        const options = { weekday: 'long', day: 'numeric', month: 'short' };
+        document.getElementById('today-date').innerText = realToday.toLocaleDateString('es-ES', options);
+
+        let kcalChartInstance = null;
+
+        /* --- 2. NAVEGACIÓN DE SUB-PESTAÑAS --- */
+        function switchSubTab(tabId, el) {
+            document.getElementById('sub-diario').classList.add('hidden');
+            document.getElementById('sub-recetario').classList.add('hidden');
+            document.getElementById('sub-metas').classList.add('hidden');
+            document.getElementById('sub-diario').classList.remove('block');
+            document.getElementById('sub-recetario').classList.remove('block');
+            document.getElementById('sub-metas').classList.remove('block');
+
+            document.querySelectorAll('.sub-nav-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(`sub-${tabId}`).classList.add('block');
+            document.getElementById(`sub-${tabId}`).classList.remove('hidden');
+            el.classList.add('active');
+
+            if(tabId === 'diario') renderDiario();
+            if(tabId === 'recetario') renderRecipes();
+            if(tabId === 'metas') loadGoalsUI();
+        }
+
+        /* --- 3. LÓGICA DEL DIARIO Y GRÁFICAS --- */
+        function renderDiario() {
+            const todayLog = dbNutri[todayStr] || [];
+            
+            // 1. Calcular Totales
+            let totalP = 0, totalC = 0, totalF = 0, totalKcal = 0;
+            todayLog.forEach(food => {
+                totalP += parseFloat(food.p) || 0;
+                totalC += parseFloat(food.c) || 0;
+                totalF += parseFloat(food.f) || 0;
+                totalKcal += parseFloat(food.kcal) || 0;
+            });
+
+            // Auto-calcular Kcal si no se han introducido a mano (P*4 + C*4 + F*9)
+            if(totalKcal === 0 && (totalP > 0 || totalC > 0 || totalF > 0)) {
+                totalKcal = (totalP * 4) + (totalC * 4) + (totalF * 9);
+            }
+
+            // 2. Actualizar Textos y Barras
+            document.getElementById('lbl-p').innerText = Math.round(totalP);
+            document.getElementById('lbl-c').innerText = Math.round(totalC);
+            document.getElementById('lbl-f').innerText = Math.round(totalF);
+            
+            document.getElementById('goal-p').innerText = dbGoals.p;
+            document.getElementById('goal-c').innerText = dbGoals.c;
+            document.getElementById('goal-f').innerText = dbGoals.f;
+
+            // Porcentajes para las barras (con límite al 100%)
+            const pctP = Math.min((totalP / dbGoals.p) * 100, 100);
+            const pctC = Math.min((totalC / dbGoals.c) * 100, 100);
+            const pctF = Math.min((totalF / dbGoals.f) * 100, 100);
+
+            document.getElementById('bar-p').style.width = `${pctP}%`;
+            document.getElementById('bar-c').style.width = `${pctC}%`;
+            document.getElementById('bar-f').style.width = `${pctF}%`;
+
+            // 3. Renderizar Gráfica de Anillo (Chart.js)
+            document.getElementById('chart-kcal-current').innerText = Math.round(totalKcal);
+            const remainingKcal = Math.max(dbGoals.kcal - totalKcal, 0);
+            
+            // Color cambia a rojo si te pasas
+            const ringColor = totalKcal > dbGoals.kcal ? '#ef4444' : '#22c55e';
+
+            if(kcalChartInstance) kcalChartInstance.destroy();
+            const ctx = document.getElementById('kcalChart').getContext('2d');
+            kcalChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Consumidas', 'Restantes'],
+                    datasets: [{
+                        data: [totalKcal, remainingKcal],
+                        backgroundColor: [ringColor, '#2a2a2a'],
+                        borderWidth: 0,
+                        cutout: '80%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+                    animation: { duration: 500 }
+                }
+            });
+
+            // 4. Pintar Lista de Alimentos
+            const list = document.getElementById('today-food-list');
+            list.innerHTML = '';
+            if(todayLog.length === 0) {
+                list.innerHTML = `<p class="text-center text-gray-600 text-sm mt-4 italic">Aún no has registrado nada hoy.</p>`;
+                return;
+            }
+
+            // Invertimos para que lo último comido salga arriba
+            [...todayLog].reverse().forEach((food, reverseIdx) => {
+                const realIdx = todayLog.length - 1 - reverseIdx; // Índice real para borrar
+                let calcKcal = food.kcal || ((food.p*4) + (food.c*4) + (food.f*9));
+                
+                list.innerHTML += `
+                    <div class="card-base py-3 px-4 flex justify-between items-center mb-2">
+                        <div class="flex-1">
+                            <div class="font-bold text-white mb-1">${food.name} <span class="text-[10px] text-gray-500 font-mono ml-2">${food.time}</span></div>
+                            <div class="flex gap-3 text-[11px] font-bold">
+                                <span class="text-blue-400">${food.p}g <span class="text-gray-600">P</span></span>
+                                <span class="text-yellow-400">${food.c}g <span class="text-gray-600">C</span></span>
+                                <span class="text-red-400">${food.f}g <span class="text-gray-600">G</span></span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="text-sm font-black text-gray-300">${Math.round(calcKcal)} <span class="text-[9px] text-gray-600">KCAL</span></div>
+                            <button onclick="deleteFood(${realIdx})" class="w-7 h-7 bg-red-900/20 text-red-500 rounded-full font-bold flex items-center justify-center">X</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function logFood() {
+            const name = document.getElementById('food-name').value.trim();
+            const p = document.getElementById('food-p').value || 0;
+            const c = document.getElementById('food-c').value || 0;
+            const f = document.getElementById('food-f').value || 0;
+            const kcal = document.getElementById('food-kcal').value || 0;
+
+            if(!name) { alert("Escribe el nombre del alimento."); return; }
+
+            if(!dbNutri[todayStr]) dbNutri[todayStr] = [];
+            
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            dbNutri[todayStr].push({ name, p, c, f, kcal, time: timeStr });
+            
+            localStorage.setItem('josema_rpg_nutri_log', JSON.stringify(dbNutri));
+            
+            // Limpiar inputs
+            document.getElementById('food-name').value = '';
+            document.getElementById('food-p').value = '';
+            document.getElementById('food-c').value = '';
+            document.getElementById('food-f').value = '';
+            document.getElementById('food-kcal').value = '';
+            
+            renderDiario();
+        }
+
+        function deleteFood(idx) {
+            dbNutri[todayStr].splice(idx, 1);
+            localStorage.setItem('josema_rpg_nutri_log', JSON.stringify(dbNutri));
+            renderDiario();
+        }
+
+        /* --- 4. LÓGICA DEL RECETARIO --- */
+        function renderRecipes() {
+            const list = document.getElementById('recipes-list');
+            list.innerHTML = '';
+            if(dbRecipes.length === 0) {
+                list.innerHTML = `<p class="text-center text-gray-600 text-sm mt-4 italic">No tienes recetas guardadas.</p>`;
+                return;
+            }
+
+            dbRecipes.forEach((rec, idx) => {
+                let calcKcal = rec.kcal || ((rec.p*4) + (rec.c*4) + (rec.f*9));
+                list.innerHTML += `
+                    <div class="card-base py-3 px-4 border-gray-700 bg-gray-900 flex justify-between items-center">
+                        <div class="flex-1">
+                            <div class="font-bold text-blue-400 mb-1">${rec.name}</div>
+                            <div class="text-[10px] text-gray-400 font-mono">${rec.p}p • ${rec.c}c • ${rec.f}g  |  ${Math.round(calcKcal)} kcal</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="eatRecipe(${idx})" class="bg-green-600 text-white font-bold text-xs px-3 py-2 rounded-lg shadow-lg shadow-green-900/50">Comer</button>
+                            <button onclick="deleteRecipe(${idx})" class="text-red-500 font-bold px-2 py-2">🗑️</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function saveRecipe() {
+            const name = document.getElementById('rec-name').value.trim();
+            const p = document.getElementById('rec-p').value || 0;
+            const c = document.getElementById('rec-c').value || 0;
+            const f = document.getElementById('rec-f').value || 0;
+            const kcal = document.getElementById('rec-k').value || 0;
+
+            if(!name) return;
+            dbRecipes.push({ name, p, c, f, kcal });
+            localStorage.setItem('josema_rpg_nutri_recipes', JSON.stringify(dbRecipes));
+            
+            document.getElementById('rec-name').value = '';
+            document.getElementById('rec-p').value = '';
+            document.getElementById('rec-c').value = '';
+            document.getElementById('rec-f').value = '';
+            document.getElementById('rec-k').value = '';
+            
+            renderRecipes();
+        }
+
+        function eatRecipe(idx) {
+            const rec = dbRecipes[idx];
+            if(!dbNutri[todayStr]) dbNutri[todayStr] = [];
+            
+            const now = new Date();
+            const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            dbNutri[todayStr].push({ 
+                name: rec.name, 
+                p: rec.p, c: rec.c, f: rec.f, kcal: rec.kcal, 
+                time: timeStr 
+            });
+            localStorage.setItem('josema_rpg_nutri_log', JSON.stringify(dbNutri));
+            
+            // Volver al diario automáticamente para ver el progreso
+            switchSubTab('diario', document.querySelectorAll('.sub-nav-btn')[0]);
+        }
+
+        function deleteRecipe(idx) {
+            if(confirm("¿Borrar esta receta de tu lista?")) {
+                dbRecipes.splice(idx, 1);
+                localStorage.setItem('josema_rpg_nutri_recipes', JSON.stringify(dbRecipes));
+                renderRecipes();
+            }
+        }
+
+        /* --- 5. LÓGICA DE METAS --- */
+        function loadGoalsUI() {
+            document.getElementById('goal-input-kcal').value = dbGoals.kcal;
+            document.getElementById('goal-input-p').value = dbGoals.p;
+            document.getElementById('goal-input-c').value = dbGoals.c;
+            document.getElementById('goal-input-f').value = dbGoals.f;
+        }
+
+        function saveGoals() {
+            dbGoals.kcal = document.getElementById('goal-input-kcal').value || 2500;
+            dbGoals.p = document.getElementById('goal-input-p').value || 150;
+            dbGoals.c = document.getElementById('goal-input-c').value || 250;
+            dbGoals.f = document.getElementById('goal-input-f').value || 80;
+            
+            localStorage.setItem('josema_rpg_nutri_goals', JSON.stringify(dbGoals));
+            alert("Metas actualizadas correctamente. 🔥");
+            
+            // Refrescar el diario para que las barras se ajusten
+            renderDiario();
+        }
+
+        // INIT
+        renderDiario();
+    </script>
+</body>
+</html>
